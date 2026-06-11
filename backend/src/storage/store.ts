@@ -1,0 +1,180 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { Sticker, Tag, Collage } from '../types';
+
+const DATA_DIR = path.join(__dirname, '../../data');
+const STICKERS_FILE = path.join(DATA_DIR, 'stickers.json');
+const TAGS_FILE = path.join(DATA_DIR, 'tags.json');
+const COLLAGES_FILE = path.join(DATA_DIR, 'collages.json');
+
+function ensureDataDir(): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+function readJsonFile<T>(filePath: string, defaultValue: T): T {
+  ensureDataDir();
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(data) as T;
+    }
+  } catch (error) {
+    console.error(`Error reading ${filePath}:`, error);
+  }
+  return defaultValue;
+}
+
+function writeJsonFile<T>(filePath: string, data: T): void {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error(`Error writing ${filePath}:`, error);
+    throw error;
+  }
+}
+
+export const stickerStore = {
+  getAll(): Sticker[] {
+    return readJsonFile<Sticker[]>(STICKERS_FILE, []);
+  },
+
+  getById(id: string): Sticker | undefined {
+    return this.getAll().find(s => s.id === id);
+  },
+
+  create(sticker: Sticker): Sticker {
+    const stickers = this.getAll();
+    stickers.push(sticker);
+    writeJsonFile(STICKERS_FILE, stickers);
+    return sticker;
+  },
+
+  update(id: string, updates: Partial<Sticker>): Sticker | undefined {
+    const stickers = this.getAll();
+    const index = stickers.findIndex(s => s.id === id);
+    if (index !== -1) {
+      stickers[index] = { ...stickers[index], ...updates };
+      writeJsonFile(STICKERS_FILE, stickers);
+      return stickers[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const stickers = this.getAll();
+    const filtered = stickers.filter(s => s.id !== id);
+    if (filtered.length !== stickers.length) {
+      writeJsonFile(STICKERS_FILE, filtered);
+      return true;
+    }
+    return false;
+  },
+
+  incrementUsage(id: string): void {
+    const stickers = this.getAll();
+    const sticker = stickers.find(s => s.id === id);
+    if (sticker) {
+      sticker.usageCount += 1;
+      sticker.lastUsedAt = new Date().toISOString();
+      writeJsonFile(STICKERS_FILE, stickers);
+    }
+  }
+};
+
+export const tagStore = {
+  getAll(): Tag[] {
+    return readJsonFile<Tag[]>(TAGS_FILE, []);
+  },
+
+  getById(id: string): Tag | undefined {
+    return this.getAll().find(t => t.id === id);
+  },
+
+  getByName(name: string): Tag | undefined {
+    return this.getAll().find(t => t.name === name);
+  },
+
+  create(tag: Tag): Tag {
+    const tags = this.getAll();
+    tags.push(tag);
+    writeJsonFile(TAGS_FILE, tags);
+    return tag;
+  },
+
+  update(id: string, updates: Partial<Tag>): Tag | undefined {
+    const tags = this.getAll();
+    const index = tags.findIndex(t => t.id === id);
+    if (index !== -1) {
+      tags[index] = { ...tags[index], ...updates };
+      writeJsonFile(TAGS_FILE, tags);
+      return tags[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const tags = this.getAll();
+    const filtered = tags.filter(t => t.id !== id);
+    if (filtered.length !== tags.length) {
+      writeJsonFile(TAGS_FILE, filtered);
+      return true;
+    }
+    return false;
+  },
+
+  incrementUsage(tagIds: string[]): void {
+    const tags = this.getAll();
+    let changed = false;
+    for (const id of tagIds) {
+      const tag = tags.find(t => t.id === id);
+      if (tag) {
+        tag.usageCount += 1;
+        changed = true;
+      }
+    }
+    if (changed) {
+      writeJsonFile(TAGS_FILE, tags);
+    }
+  }
+};
+
+export const collageStore = {
+  getAll(): Collage[] {
+    return readJsonFile<Collage[]>(COLLAGES_FILE, []);
+  },
+
+  getById(id: string): Collage | undefined {
+    return this.getAll().find(c => c.id === id);
+  },
+
+  create(collage: Collage): Collage {
+    const collages = this.getAll();
+    collages.push(collage);
+    writeJsonFile(COLLAGES_FILE, collages);
+    return collage;
+  },
+
+  update(id: string, updates: Partial<Collage>): Collage | undefined {
+    const collages = this.getAll();
+    const index = collages.findIndex(c => c.id === id);
+    if (index !== -1) {
+      collages[index] = { ...collages[index], ...updates, updatedAt: new Date().toISOString() };
+      writeJsonFile(COLLAGES_FILE, collages);
+      return collages[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const collages = this.getAll();
+    const filtered = collages.filter(c => c.id !== id);
+    if (filtered.length !== collages.length) {
+      writeJsonFile(COLLAGES_FILE, filtered);
+      return true;
+    }
+    return false;
+  }
+};

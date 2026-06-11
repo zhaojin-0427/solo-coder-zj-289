@@ -1,0 +1,252 @@
+.archive-page {
+  max-width: 1280px;
+}
+
+.filter-item.flex-2 {
+  flex: 2;
+  min-width: 200px;
+}
+
+.filter-item.flex-3 {
+  flex: 3;
+}
+
+.tag-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-height: 72px;
+  overflow-y: auto;
+}
+
+.tag-filter-btn {
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.tag-filter-btn:hover {
+  background: var(--bg-hover);
+}
+
+.tag-filter-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.collage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.collage-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+  border: 2px solid transparent;
+}
+
+.collage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-light);
+}
+
+.collage-thumb-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.collage-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 12px;
+}
+
+.collage-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.collage-thumb-wrap:hover .collage-overlay {
+  opacity: 1;
+}
+
+.overlay-btn {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.collage-info {
+  padding: 16px 18px 18px;
+}
+
+.collage-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.collage-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.collage-count {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.collage-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.collage-meta {
+  margin-bottom: 12px;
+}
+
+.meta-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.collage-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.collage-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.modal-xl {
+  max-width: 900px !important;
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.preview-body {
+  padding: 20px 24px;
+}
+
+.preview-desc {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.preview-desc strong {
+  color: var(--text-primary);
+}
+
+.preview-canvas-wrap {
+  background: linear-gradient(135deg, #f5f0e8 0%, #e8dfd5 100%);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 18px;
+  max-height: 500px;
+  overflow: auto;
+}
+
+.preview-canvas {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+
+.preview-info-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.preview-stat {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-preview {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+@media (max-width: 900px) {
+  .preview-info-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
