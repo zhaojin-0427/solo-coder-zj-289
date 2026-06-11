@@ -201,7 +201,11 @@ export function generatePlaceholderElements(
     width: tpl.width,
     height: tpl.height,
     rotation: tpl.rotation,
-    zIndex: tpl.zIndex
+    zIndex: tpl.zIndex,
+    isPlaceholder: true,
+    placeholderCategory: tpl.originalStickerCategory,
+    placeholderColorFamily: tpl.originalStickerColorFamily,
+    placeholderLabel: tpl.placeholderLabel || `${getCategoryLabel(tpl.originalStickerCategory)} · ${getColorFamilyLabel(tpl.originalStickerColorFamily)}`
   }));
 }
 

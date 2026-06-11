@@ -8,6 +8,7 @@ import {
   TemplateApplyResult,
   TemplateReplacementRecord,
   Collage,
+  CollageElement,
   ColorFamily
 } from '../types';
 import {
@@ -65,15 +66,15 @@ router.get('/themes', (req: Request, res: Response) => {
         themeSet.add(th);
       }
     }
-    const collages = collageStore.getAll();
-    for (const c of collages) {
-      if (c.tags && c.tags.length > 0) {
-        for (const t of c.tags) {
-          themeSet.add(t);
+    const stickers = stickerStore.getAll();
+    for (const s of stickers) {
+      if (s.themes && s.themes.length > 0) {
+        for (const th of s.themes) {
+          themeSet.add(th);
         }
       }
     }
-    res.json({ success: true, data: Array.from(themeSet) });
+    res.json({ success: true, data: Array.from(themeSet).sort() });
   } catch (error) {
     res.status(500).json({ success: false, error: '获取主题列表失败' });
   }
@@ -114,7 +115,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
 router.post('/', (req: Request, res: Response) => {
   try {
-    const { name, description, collageId, themes } = req.body;
+    const { name, description, collageId, themes, elements, backgroundColor, canvasWidth, canvasHeight, tags } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, error: '请输入模板名称' });
@@ -130,39 +131,71 @@ router.post('/', (req: Request, res: Response) => {
 
     const allStickers = stickerStore.getAll();
     const colorFamiliesSet = new Set<ColorFamily>();
+    const themesSet = new Set<string>();
 
-    const elements: TemplateElement[] = [];
+    const templateElements: TemplateElement[] = [];
+
+    let sourceElements: CollageElement[] = [];
+    let sourceBg = '#FFFFFF';
+    let sourceW = 800;
+    let sourceH = 1100;
+    let sourceTags: string[] = [];
+
     if (sourceCollage) {
-      for (const elem of sourceCollage.elements) {
-        const sticker = allStickers.find(s => s.id === elem.stickerId);
-        if (sticker) {
-          colorFamiliesSet.add(sticker.colorFamily);
-          elements.push({
-            id: `tpl_${elem.id}_${uuidv4().slice(0, 6)}`,
-            originalStickerId: elem.stickerId,
-            originalStickerCategory: sticker.category,
-            originalStickerColorFamily: sticker.colorFamily,
-            x: elem.x,
-            y: elem.y,
-            width: elem.width,
-            height: elem.height,
-            rotation: elem.rotation,
-            zIndex: elem.zIndex
-          });
+      sourceElements = sourceCollage.elements;
+      sourceBg = sourceCollage.backgroundColor;
+      sourceW = sourceCollage.canvasWidth;
+      sourceH = sourceCollage.canvasHeight;
+      sourceTags = sourceCollage.tags;
+    }
+
+    if (elements && Array.isArray(elements) && elements.length > 0) {
+      sourceElements = elements;
+      if (backgroundColor) sourceBg = backgroundColor;
+      if (canvasWidth) sourceW = canvasWidth;
+      if (canvasHeight) sourceH = canvasHeight;
+      if (tags) sourceTags = tags;
+    }
+
+    for (const elem of sourceElements) {
+      const sticker = allStickers.find(s => s.id === elem.stickerId);
+      if (sticker) {
+        colorFamiliesSet.add(sticker.colorFamily);
+        if (sticker.themes) {
+          sticker.themes.forEach(th => themesSet.add(th));
         }
+        templateElements.push({
+          id: `tpl_${elem.id}_${uuidv4().slice(0, 6)}`,
+          originalStickerId: elem.stickerId,
+          originalStickerCategory: sticker.category,
+          originalStickerColorFamily: sticker.colorFamily,
+          x: elem.x,
+          y: elem.y,
+          width: elem.width,
+          height: elem.height,
+          rotation: elem.rotation,
+          zIndex: elem.zIndex
+        });
       }
+    }
+
+    let finalThemes: string[] = [];
+    if (themes && Array.isArray(themes) && themes.length > 0) {
+      finalThemes = themes;
+    } else if (themesSet.size > 0) {
+      finalThemes = Array.from(themesSet);
     }
 
     const template: CollageTemplate = {
       id: uuidv4(),
       name,
       description: description || '',
-      elements,
-      backgroundColor: sourceCollage?.backgroundColor || '#FFFFFF',
-      canvasWidth: sourceCollage?.canvasWidth || 800,
-      canvasHeight: sourceCollage?.canvasHeight || 1100,
-      tags: sourceCollage?.tags || [],
-      themes: themes || sourceCollage?.tags || [],
+      elements: templateElements,
+      backgroundColor: sourceBg,
+      canvasWidth: sourceW,
+      canvasHeight: sourceH,
+      tags: sourceTags,
+      themes: finalThemes,
       colorFamilies: Array.from(colorFamiliesSet),
       sourceCollageId: collageId,
       usageCount: 0,

@@ -38,6 +38,10 @@ export interface CollageElement {
   height: number;
   rotation: number;
   zIndex: number;
+  isPlaceholder?: boolean;
+  placeholderCategory?: StickerCategory;
+  placeholderColorFamily?: ColorFamily;
+  placeholderLabel?: string;
 }
 
 export interface TemplateElement {

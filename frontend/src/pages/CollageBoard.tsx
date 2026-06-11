@@ -390,12 +390,25 @@ export default function CollageBoard() {
       return;
     }
     try {
-      await templateApi.create({
+      const baseData = {
         name: saveTemplateForm.name,
         description: saveTemplateForm.description,
-        collageId: id,
         themes: saveTemplateForm.themes
-      });
+      };
+      let createData;
+      if (id) {
+        createData = { ...baseData, collageId: id };
+      } else {
+        createData = {
+          ...baseData,
+          elements,
+          backgroundColor,
+          canvasWidth,
+          canvasHeight,
+          tags: saveForm.collageTags
+        };
+      }
+      await templateApi.create(createData);
       alert('模板保存成功！');
       setShowSaveTemplateModal(false);
       if (leftTab === 'templates') {
@@ -762,21 +775,30 @@ export default function CollageBoard() {
             >
               {elements.map(elem => {
                 const sticker = stickers.find(s => s.id === elem.stickerId);
+                const isPlaceholder = elem.isPlaceholder || elem.stickerId === '__placeholder__';
+                const placeholderColor = COLOR_FAMILY_OPTIONS.find(c => c.value === elem.placeholderColorFamily)?.color || '#ddd';
                 return (
                   <div
                     key={elem.id}
-                    className={`canvas-element ${selectedId === elem.id ? 'selected' : ''}`}
+                    className={`canvas-element ${selectedId === elem.id ? 'selected' : ''} ${isPlaceholder ? 'placeholder-element' : ''}`}
                     style={{
                       left: elem.x,
                       top: elem.y,
                       width: elem.width,
                       height: elem.height,
                       transform: `rotate(${elem.rotation}deg)`,
-                      zIndex: elem.zIndex
+                      zIndex: elem.zIndex,
+                      ...(isPlaceholder ? { borderColor: placeholderColor } : {})
                     }}
                     onMouseDown={(e) => handleCanvasMouseDown(e, elem)}
                   >
-                    {sticker?.imageData ? (
+                    {isPlaceholder ? (
+                      <div className="placeholder-content" style={{ backgroundColor: `${placeholderColor}22` }}>
+                        <div className="placeholder-icon" style={{ color: placeholderColor }}>📌</div>
+                        <div className="placeholder-label">{elem.placeholderLabel || '布局占位'}</div>
+                        <div className="placeholder-category">{elem.placeholderCategory ? CategoryLabels[elem.placeholderCategory] : ''}</div>
+                      </div>
+                    ) : sticker?.imageData ? (
                       <img src={sticker.imageData} draggable={false} />
                     ) : (
                       <div className="elem-placeholder">🖼️</div>
@@ -818,17 +840,67 @@ export default function CollageBoard() {
                 </div>
               ) : (
                 <div className="prop-content">
-                  <div className="prop-preview">
-                    {selectedSticker?.imageData ? (
-                      <img src={selectedSticker.imageData} />
-                    ) : <div className="mini-placeholder">🖼️</div>}
-                  </div>
-                  <div className="prop-name">{selectedSticker?.name || '素材'}</div>
-                  <div className="prop-palette">
-                    {(selectedSticker?.primaryColors || []).map((c, i) => (
-                      <span key={i} className="prop-color" style={{ backgroundColor: c }} title={c} />
-                    ))}
-                  </div>
+                  {selectedElement.isPlaceholder || selectedElement.stickerId === '__placeholder__' ? (
+                    <>
+                      <div className="prop-preview placeholder-preview"
+                        style={{
+                          backgroundColor: `${COLOR_FAMILY_OPTIONS.find(c => c.value === selectedElement.placeholderColorFamily)?.color || '#ddd'}22`,
+                          borderColor: COLOR_FAMILY_OPTIONS.find(c => c.value === selectedElement.placeholderColorFamily)?.color || '#ddd'
+                        }}>
+                        <div className="placeholder-icon-lg" style={{ color: COLOR_FAMILY_OPTIONS.find(c => c.value === selectedElement.placeholderColorFamily)?.color }}>📌</div>
+                      </div>
+                      <div className="prop-name">布局占位符</div>
+                      <div className="prop-palette">
+                        {selectedElement.placeholderColorFamily && (
+                          <span className="prop-color"
+                            style={{
+                              backgroundColor: COLOR_FAMILY_OPTIONS.find(c => c.value === selectedElement.placeholderColorFamily)?.color,
+                              width: 60,
+                              flex: 'none'
+                            }}
+                            title={ColorFamilyLabels[selectedElement.placeholderColorFamily]} />
+                        )}
+                      </div>
+                      <div className="placeholder-meta-section">
+                        <div className="meta-row">
+                          <span className="meta-label">建议分类</span>
+                          <span className="meta-value">
+                            {selectedElement.placeholderCategory
+                              ? CategoryLabels[selectedElement.placeholderCategory]
+                              : '-'}
+                          </span>
+                        </div>
+                        <div className="meta-row">
+                          <span className="meta-label">建议色系</span>
+                          <span className="meta-value">
+                            {selectedElement.placeholderColorFamily
+                              ? ColorFamilyLabels[selectedElement.placeholderColorFamily]
+                              : '-'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="prop-section">
+                        <label>占位说明</label>
+                        <div className="placeholder-desc">
+                          {selectedElement.placeholderLabel || '在此位置放置对应分类和色系的素材'}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="prop-preview">
+                        {selectedSticker?.imageData ? (
+                          <img src={selectedSticker.imageData} />
+                        ) : <div className="mini-placeholder">🖼️</div>}
+                      </div>
+                      <div className="prop-name">{selectedSticker?.name || '素材'}</div>
+                      <div className="prop-palette">
+                        {(selectedSticker?.primaryColors || []).map((c, i) => (
+                          <span key={i} className="prop-color" style={{ backgroundColor: c }} title={c} />
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                   <div className="prop-section">
                     <label>旋转角度</label>

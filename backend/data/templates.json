@@ -1,0 +1,121 @@
+[
+  {
+    "id": "5ffe7966-2c9e-488e-9a8d-17dd29522b80",
+    "name": "旅行复用模板",
+    "description": "验证模板功能",
+    "elements": [
+      {
+        "id": "tpl_e1_0002fe",
+        "originalStickerId": "129e9f48-f877-47ce-9479-169744cb4a71",
+        "originalStickerCategory": "decoration",
+        "originalStickerColorFamily": "green",
+        "x": 10,
+        "y": 10,
+        "width": 80,
+        "height": 80,
+        "rotation": 0,
+        "zIndex": 1
+      }
+    ],
+    "backgroundColor": "#FFFFFF",
+    "canvasWidth": 600,
+    "canvasHeight": 840,
+    "tags": [
+      "84113db6-4609-490b-94bb-cee2f68f6210"
+    ],
+    "themes": [
+      "旅行"
+    ],
+    "colorFamilies": [
+      "green"
+    ],
+    "sourceCollageId": "33ba69dc-2681-4aed-a41c-666395f81d44",
+    "usageCount": 7,
+    "createdAt": "2026-06-11T03:40:51.837Z",
+    "updatedAt": "2026-06-11T04:00:22.378Z"
+  },
+  {
+    "id": "e76e1212-4653-4f43-804a-93558fdb4303",
+    "name": "未保存画布模板",
+    "description": "模拟未保存拼贴直接存模板",
+    "elements": [],
+    "backgroundColor": "#FFFFFF",
+    "canvasWidth": 800,
+    "canvasHeight": 1100,
+    "tags": [],
+    "themes": [
+      "手作"
+    ],
+    "colorFamilies": [],
+    "usageCount": 0,
+    "createdAt": "2026-06-11T03:41:21.966Z",
+    "updatedAt": "2026-06-11T03:41:21.966Z"
+  },
+  {
+    "id": "4c94115f-27ac-4932-927c-bb242ed83904",
+    "name": "测试模板-直接传元素",
+    "description": "测试直接传入elements创建模板",
+    "elements": [
+      {
+        "id": "tpl_elem_test_1_3a0b8e",
+        "originalStickerId": "129e9f48-f877-47ce-9479-169744cb4a71",
+        "originalStickerCategory": "decoration",
+        "originalStickerColorFamily": "green",
+        "x": 100,
+        "y": 100,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "zIndex": 1
+      }
+    ],
+    "backgroundColor": "#FFF5EE",
+    "canvasWidth": 600,
+    "canvasHeight": 840,
+    "tags": [],
+    "themes": [
+      "旅行",
+      "手作"
+    ],
+    "colorFamilies": [
+      "green"
+    ],
+    "usageCount": 0,
+    "createdAt": "2026-06-11T03:56:00.476Z",
+    "updatedAt": "2026-06-11T03:56:00.476Z"
+  },
+  {
+    "id": "63d17270-cdbb-4636-84a1-eedf5e0ad378",
+    "name": "复验未保存画布模板",
+    "description": "复验直接传入画布元素",
+    "elements": [
+      {
+        "id": "tpl_elem_verify_1_f4be3c",
+        "originalStickerId": "129e9f48-f877-47ce-9479-169744cb4a71",
+        "originalStickerCategory": "decoration",
+        "originalStickerColorFamily": "green",
+        "x": 50,
+        "y": 60,
+        "width": 90,
+        "height": 100,
+        "rotation": 12,
+        "zIndex": 1
+      }
+    ],
+    "backgroundColor": "#FFF9F0",
+    "canvasWidth": 600,
+    "canvasHeight": 840,
+    "tags": [
+      "84113db6-4609-490b-94bb-cee2f68f6210"
+    ],
+    "themes": [
+      "旅行"
+    ],
+    "colorFamilies": [
+      "green"
+    ],
+    "usageCount": 0,
+    "createdAt": "2026-06-11T04:00:22.367Z",
+    "updatedAt": "2026-06-11T04:00:22.367Z"
+  }
+]

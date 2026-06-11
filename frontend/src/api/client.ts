@@ -3,6 +3,7 @@ import type {
   Sticker,
   Tag,
   Collage,
+  CollageElement,
   CollageTemplate,
   Statistics,
   ColorHarmonyResult,
@@ -144,6 +145,11 @@ export const templateApi = {
     description?: string;
     collageId?: string;
     themes?: string[];
+    elements?: CollageElement[];
+    backgroundColor?: string;
+    canvasWidth?: number;
+    canvasHeight?: number;
+    tags?: string[];
   }): Promise<CollageTemplate> {
     const response = await api.post('/templates', data);
     return handleResponse<CollageTemplate>(response);
