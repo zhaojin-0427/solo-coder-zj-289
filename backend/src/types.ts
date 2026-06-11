@@ -130,6 +130,46 @@ export interface ColorHarmonySuggestion {
 
 export type PlanStatus = 'pending' | 'in_progress' | 'completed' | 'overdue';
 
+export type ProcurementItemType = 'sticker' | 'tape' | 'stamp' | 'memo' | 'other';
+export type ProcurementPriority = 'high' | 'medium' | 'low';
+export type ProcurementStatus = 'pending' | 'purchased' | 'stocked';
+
+export interface ProcurementItem {
+  id: string;
+  name: string;
+  itemType: ProcurementItemType;
+  budget: number;
+  actualCost?: number;
+  channel: string;
+  priority: ProcurementPriority;
+  themes: string[];
+  targetColorFamily: ColorFamily;
+  expectedStockDate: string;
+  status: ProcurementStatus;
+  notes: string;
+  convertedStickerId?: string;
+  purchasedAt?: string;
+  stockedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcurementStats {
+  totalItems: number;
+  pendingCount: number;
+  purchasedCount: number;
+  stockedCount: number;
+  totalBudget: number;
+  totalSpent: number;
+  budgetRemaining: number;
+  categorySpending: { category: ProcurementItemType; budget: number; spent: number; count: number }[];
+  monthlyBudget: { month: string; budget: number; spent: number }[];
+  themeGapChanges: { theme: string; gapScore: number; previousGapScore: number }[];
+  conversionRate: number;
+  overStockedColorFamilies: { family: ColorFamily; count: number; percentage: number }[];
+  underStockedThemes: { theme: string; coverage: number }[];
+}
+
 export interface Plan {
   id: string;
   title: string;
@@ -175,4 +215,5 @@ export interface Statistics {
   templateReuseRate: number;
   topTemplates: { templateId: string; name: string; usageCount: number }[];
   planStats?: PlanStatistics;
+  procurementStats?: ProcurementStats;
 }

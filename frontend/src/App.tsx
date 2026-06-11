@@ -6,6 +6,7 @@ import Calendar from './pages/Calendar';
 import CollageBoard from './pages/CollageBoard';
 import Archive from './pages/Archive';
 import Statistics from './pages/Statistics';
+import Procurement from './pages/Procurement';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="collage" element={<CollageBoard />} />
         <Route path="collage/:id" element={<CollageBoard />} />
         <Route path="archive" element={<Archive />} />
+        <Route path="procurement" element={<Procurement />} />
         <Route path="statistics" element={<Statistics />} />
       </Route>
     </Routes>

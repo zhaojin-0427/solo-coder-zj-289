@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { statisticsApi, planApi } from '../api/client';
-import type { Statistics, ColorFamily, StickerCategory, StickerSource, PlanStatistics } from '../types';
-import { ColorFamilyLabels, CategoryLabels, SourceLabels } from '../types';
+import type { Statistics, ColorFamily, StickerCategory, StickerSource, PlanStatistics, ProcurementStats, ProcurementItemType } from '../types';
+import { ColorFamilyLabels, CategoryLabels, SourceLabels, ProcurementItemTypeLabels } from '../types';
 import './Statistics.css';
 
 const ColorFamilyColors: Record<ColorFamily, string> = {
@@ -153,6 +153,31 @@ export default function Statistics() {
               <div className="stat-content">
                 <div className="stat-value">{planStats.totalPlans || 0}</div>
                 <div className="stat-label">计划总数</div>
+              </div>
+            </div>
+          </>
+        )}
+        {stats.procurementStats && (
+          <>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF9A76 0%, #FFD93D 100%)', color: '#333' }}>
+              <div className="stat-icon">🛒</div>
+              <div className="stat-content">
+                <div className="stat-value">¥{stats.procurementStats.totalBudget.toFixed(0)}</div>
+                <div className="stat-label">月度采购预算</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF6B9D 0%, #A855F7 100%)', color: '#fff' }}>
+              <div className="stat-icon">💳</div>
+              <div className="stat-content">
+                <div className="stat-value">¥{stats.procurementStats.totalSpent.toFixed(0)}</div>
+                <div className="stat-label">采购已花费</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #6BCB77 0%, #4D96FF 100%)', color: '#fff' }}>
+              <div className="stat-icon">🔄</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.procurementStats.conversionRate}%</div>
+                <div className="stat-label">采购转化率</div>
               </div>
             </div>
           </>
@@ -508,6 +533,191 @@ export default function Statistics() {
               </div>
             </div>
           </div>
+        )}
+
+        {stats.procurementStats && stats.procurementStats.totalItems > 0 && (
+          <>
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">💰 月度采购预算</h3>
+                <span className="section-badge">采购数据</span>
+              </div>
+              {stats.procurementStats.monthlyBudget.length === 0 ? (
+                <div className="empty-mini">暂无采购数据</div>
+              ) : (
+                <>
+                  <div className="conv-chart">
+                    {(() => {
+                      const maxVal = Math.max(...stats.procurementStats!.monthlyBudget!.map(m => Math.max(m.budget, m.spent)), 1);
+                      return stats.procurementStats!.monthlyBudget!.map(item => (
+                        <div key={item.month} className="conv-bar-col">
+                          <div className="conv-bar-wrap">
+                            <div className="conv-bar-group">
+                              <div className="conv-bar conv-bar-template"
+                                style={{ height: `${(item.budget / maxVal) * 100}%` }}
+                                title={`预算: ¥${item.budget.toFixed(2)}`}>
+                                <span className="conv-bar-value">¥{item.budget.toFixed(0)}</span>
+                              </div>
+                              <div className="conv-bar conv-bar-collage"
+                                style={{ height: `${(item.spent / maxVal) * 100}%` }}
+                                title={`花费: ¥${item.spent.toFixed(2)}`}>
+                                <span className="conv-bar-value">¥{item.spent.toFixed(0)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="conv-label">{item.month.slice(5)}</div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  <div className="conv-legend">
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#A855F7' }} />
+                      <span className="legend-label">预算</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#6EC6FF' }} />
+                      <span className="legend-label">实际花费</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">📂 分类花费占比</h3>
+                <span className="section-badge">{stats.procurementStats.categorySpending.length} 类</span>
+              </div>
+              {stats.procurementStats.categorySpending.length === 0 ? (
+                <div className="empty-mini">暂无数据</div>
+              ) : (
+                <div className="tag-ranking">
+                  {(() => {
+                    const maxBudget = Math.max(...stats.procurementStats!.categorySpending!.map(c => c.budget), 1);
+                    return stats.procurementStats!.categorySpending!.map((cat, idx) => (
+                      <div key={cat.category} className="tag-rank-item">
+                        <div className={`rank-number ${idx < 3 ? 'top' : ''}`}>
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                        </div>
+                        <div className="rank-bar-wrap">
+                          <div className="rank-info">
+                            <span className="rank-name">{ProcurementItemTypeLabels[cat.category as ProcurementItemType] || cat.category}</span>
+                            <span className="rank-count">¥{cat.spent.toFixed(0)} / ¥{cat.budget.toFixed(0)} ({cat.count}项)</span>
+                          </div>
+                          <div className="rank-bar-bg">
+                            <div className="rank-bar-fill"
+                              style={{
+                                width: `${(cat.budget / maxBudget) * 100}%`,
+                                background: cat.budget > 0 && cat.spent / cat.budget > 0.9
+                                  ? 'linear-gradient(90deg, #FF6B6B, #FF9A76)'
+                                  : 'linear-gradient(90deg, #A855F7, #6EC6FF)'
+                              }} />
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {stats.procurementStats.themeGapChanges && stats.procurementStats.themeGapChanges.length > 0 && (
+              <div className="stats-section card card-wide">
+                <div className="section-header">
+                  <h3 className="section-title">📈 主题缺口变化趋势</h3>
+                  <span className="section-badge">{stats.procurementStats.themeGapChanges.length} 个主题</span>
+                </div>
+                <div className="theme-trend-chart">
+                  {stats.procurementStats.themeGapChanges.map(item => {
+                    const diff = item.previousGapScore - item.gapScore;
+                    return (
+                      <div key={item.theme} className="theme-trend-item">
+                        <div className="theme-trend-header">
+                          <span className="theme-trend-name">{item.theme}</span>
+                          <span className="theme-trend-stats">
+                            <span style={{ color: diff > 0 ? '#6BCB77' : diff < 0 ? '#FF6B6B' : '#9B9B9B', fontWeight: 600 }}>
+                              {diff > 0 ? `↓${diff}%` : diff < 0 ? `↑${Math.abs(diff)}%` : '持平'}
+                            </span>
+                            <span className="stat-total">缺口 {item.gapScore}%</span>
+                          </span>
+                        </div>
+                        <div className="theme-trend-bars">
+                          <div className="theme-trend-track">
+                            <div className="theme-trend-fill completed"
+                              style={{ width: `${((100 - item.gapScore) / 100) * 100}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="theme-trend-legend">
+                  <div className="legend-item">
+                    <span className="legend-dot" style={{ backgroundColor: '#6BCB77' }} />
+                    <span className="legend-label">素材覆盖</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-dot" style={{ backgroundColor: '#FFD93D' }} />
+                    <span className="legend-label">缺口空间</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">🔄 采购转化为实际素材比例</h3>
+                <span className="section-badge">{stats.procurementStats.conversionRate}%</span>
+              </div>
+              <div className="conversion-rate-display">
+                <div className="conv-rate-ring">
+                  <svg viewBox="0 0 100 100" className="donut-svg">
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#f0e6dc" strokeWidth="14" />
+                    <circle cx="50" cy="50" r="36" fill="none"
+                      stroke={stats.procurementStats.conversionRate >= 70 ? '#6BCB77' : stats.procurementStats.conversionRate >= 40 ? '#FFD93D' : '#FF6B6B'}
+                      strokeWidth="14"
+                      strokeDasharray={`${(stats.procurementStats.conversionRate / 100) * 2 * Math.PI * 36} ${2 * Math.PI * 36}`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 50 50)"
+                      style={{ transition: 'all 0.5s' }} />
+                    <text x="50" y="48" textAnchor="middle" className="donut-text-value">{stats.procurementStats.conversionRate}%</text>
+                    <text x="50" y="60" textAnchor="middle" className="donut-text-label">转化率</text>
+                  </svg>
+                </div>
+                <div className="conv-rate-details">
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">采购项总数</span>
+                    <span className="conv-detail-value">{stats.procurementStats.totalItems}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">待采购</span>
+                    <span className="conv-detail-value">{stats.procurementStats.pendingCount}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">已购买</span>
+                    <span className="conv-detail-value">{stats.procurementStats.purchasedCount}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">已入库</span>
+                    <span className="conv-detail-value">{stats.procurementStats.stockedCount}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">总预算</span>
+                    <span className="conv-detail-value">¥{stats.procurementStats.totalBudget.toFixed(2)}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">已花费</span>
+                    <span className="conv-detail-value">¥{stats.procurementStats.totalSpent.toFixed(2)}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">剩余预算</span>
+                    <span className="conv-detail-value">¥{stats.procurementStats.budgetRemaining.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="stats-section card card-wide">

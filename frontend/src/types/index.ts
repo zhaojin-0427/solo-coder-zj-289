@@ -123,6 +123,46 @@ export interface ColorHarmonyResult {
 
 export type PlanStatus = 'pending' | 'in_progress' | 'completed' | 'overdue';
 
+export type ProcurementItemType = 'sticker' | 'tape' | 'stamp' | 'memo' | 'other';
+export type ProcurementPriority = 'high' | 'medium' | 'low';
+export type ProcurementStatus = 'pending' | 'purchased' | 'stocked';
+
+export interface ProcurementItem {
+  id: string;
+  name: string;
+  itemType: ProcurementItemType;
+  budget: number;
+  actualCost?: number;
+  channel: string;
+  priority: ProcurementPriority;
+  themes: string[];
+  targetColorFamily: ColorFamily;
+  expectedStockDate: string;
+  status: ProcurementStatus;
+  notes: string;
+  convertedStickerId?: string;
+  purchasedAt?: string;
+  stockedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcurementStats {
+  totalItems: number;
+  pendingCount: number;
+  purchasedCount: number;
+  stockedCount: number;
+  totalBudget: number;
+  totalSpent: number;
+  budgetRemaining: number;
+  categorySpending: { category: ProcurementItemType; budget: number; spent: number; count: number }[];
+  monthlyBudget: { month: string; budget: number; spent: number }[];
+  themeGapChanges: { theme: string; gapScore: number; previousGapScore: number }[];
+  conversionRate: number;
+  overStockedColorFamilies: { family: ColorFamily; count: number; percentage: number }[];
+  underStockedThemes: { theme: string; coverage: number }[];
+}
+
 export interface Plan {
   id: string;
   title: string;
@@ -168,6 +208,7 @@ export interface Statistics {
   templateReuseRate: number;
   topTemplates: { templateId: string; name: string; usageCount: number }[];
   planStats?: PlanStatistics;
+  procurementStats?: ProcurementStats;
 }
 
 export interface ApiResponse<T> {
@@ -181,6 +222,26 @@ export const CategoryLabels: Record<StickerCategory, string> = {
   text: '文字',
   decoration: '装饰',
   tape: '胶带'
+};
+
+export const ProcurementItemTypeLabels: Record<ProcurementItemType, string> = {
+  sticker: '贴纸',
+  tape: '胶带',
+  stamp: '印章',
+  memo: '便签',
+  other: '其他'
+};
+
+export const ProcurementPriorityLabels: Record<ProcurementPriority, string> = {
+  high: '高',
+  medium: '中',
+  low: '低'
+};
+
+export const ProcurementStatusLabels: Record<ProcurementStatus, string> = {
+  pending: '待采购',
+  purchased: '已购买',
+  stocked: '已入库'
 };
 
 export const SourceLabels: Record<StickerSource, string> = {

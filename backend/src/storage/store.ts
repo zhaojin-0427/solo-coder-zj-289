@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Sticker, Tag, Collage, CollageTemplate, TemplateReplacementRecord, Plan } from '../types';
+import { Sticker, Tag, Collage, CollageTemplate, TemplateReplacementRecord, Plan, ProcurementItem } from '../types';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const STICKERS_FILE = path.join(DATA_DIR, 'stickers.json');
@@ -9,6 +9,7 @@ const COLLAGES_FILE = path.join(DATA_DIR, 'collages.json');
 const TEMPLATES_FILE = path.join(DATA_DIR, 'templates.json');
 const REPLACEMENTS_FILE = path.join(DATA_DIR, 'template_replacements.json');
 const PLANS_FILE = path.join(DATA_DIR, 'plans.json');
+const PROCUREMENT_FILE = path.join(DATA_DIR, 'procurement.json');
 
 function ensureDataDir(): void {
   if (!fs.existsSync(DATA_DIR)) {
@@ -297,5 +298,47 @@ export const planStore = {
 
   getByCollageId(collageId: string): Plan | undefined {
     return this.getAll().find(p => p.collageId === collageId);
+  }
+};
+
+export const procurementStore = {
+  getAll(): ProcurementItem[] {
+    return readJsonFile<ProcurementItem[]>(PROCUREMENT_FILE, []);
+  },
+
+  getById(id: string): ProcurementItem | undefined {
+    return this.getAll().find(p => p.id === id);
+  },
+
+  getByStatus(status: string): ProcurementItem[] {
+    return this.getAll().filter(p => p.status === status);
+  },
+
+  create(item: ProcurementItem): ProcurementItem {
+    const items = this.getAll();
+    items.push(item);
+    writeJsonFile(PROCUREMENT_FILE, items);
+    return item;
+  },
+
+  update(id: string, updates: Partial<ProcurementItem>): ProcurementItem | undefined {
+    const items = this.getAll();
+    const index = items.findIndex(p => p.id === id);
+    if (index !== -1) {
+      items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
+      writeJsonFile(PROCUREMENT_FILE, items);
+      return items[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const items = this.getAll();
+    const filtered = items.filter(p => p.id !== id);
+    if (filtered.length !== items.length) {
+      writeJsonFile(PROCUREMENT_FILE, filtered);
+      return true;
+    }
+    return false;
   }
 };

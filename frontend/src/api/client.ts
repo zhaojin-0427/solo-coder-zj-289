@@ -13,7 +13,9 @@ import type {
   Plan,
   PlanStatistics,
   PlanStatus,
-  ColorFamily
+  ColorFamily,
+  ProcurementItem,
+  ProcurementStats
 } from '../types';
 
 const api: AxiosInstance = axios.create({
@@ -245,6 +247,77 @@ export const planApi = {
 
   async getAvailableThemes(): Promise<string[]> {
     const response = await api.get('/plans/themes/available');
+    return handleResponse<string[]>(response);
+  }
+};
+
+export const procurementApi = {
+  async getAll(params?: {
+    status?: string;
+    itemType?: string;
+    priority?: string;
+    theme?: string;
+    colorFamily?: string;
+  }): Promise<ProcurementItem[]> {
+    const response = await api.get('/procurement', { params });
+    return handleResponse<ProcurementItem[]>(response);
+  },
+
+  async getById(id: string): Promise<ProcurementItem> {
+    const response = await api.get(`/procurement/${id}`);
+    return handleResponse<ProcurementItem>(response);
+  },
+
+  async create(data: {
+    name: string;
+    itemType: string;
+    budget: number;
+    channel?: string;
+    priority?: string;
+    themes?: string[];
+    targetColorFamily?: string;
+    expectedStockDate?: string;
+    notes?: string;
+  }): Promise<ProcurementItem> {
+    const response = await api.post('/procurement', data);
+    return handleResponse<ProcurementItem>(response);
+  },
+
+  async update(id: string, data: Partial<ProcurementItem>): Promise<ProcurementItem> {
+    const response = await api.put(`/procurement/${id}`, data);
+    return handleResponse<ProcurementItem>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await api.delete(`/procurement/${id}`);
+    handleResponse<void>(response);
+  },
+
+  async getGapAnalysis(): Promise<{
+    overStockedColorFamilies: { family: ColorFamily; count: number; percentage: number }[];
+    underStockedColorFamilies: { family: ColorFamily; count: number; percentage: number }[];
+    overStockedCategories: { category: string; count: number }[];
+    underStockedThemes: { theme: string; coverage: number; stickerCount: number; demandCount: number }[];
+    unusedCount: number;
+    pendingProcurementThemes: string[];
+    suggestions: string[];
+  }> {
+    const response = await api.get('/procurement/analysis/gaps');
+    return handleResponse(response);
+  },
+
+  async convertToDraft(id: string): Promise<{ sticker: any; procurementItem: ProcurementItem }> {
+    const response = await api.post(`/procurement/${id}/convert-to-draft`);
+    return handleResponse(response);
+  },
+
+  async getStatistics(): Promise<ProcurementStats> {
+    const response = await api.get('/procurement/statistics/summary');
+    return handleResponse<ProcurementStats>(response);
+  },
+
+  async getAvailableThemes(): Promise<string[]> {
+    const response = await api.get('/procurement/themes/available');
     return handleResponse<string[]>(response);
   }
 };
