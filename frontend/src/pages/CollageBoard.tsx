@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { stickerApi, collageApi, statisticsApi, tagApi, templateApi, planApi } from '../api/client';
+import { stickerApi, collageApi, statisticsApi, tagApi, templateApi, planApi, sharingApi } from '../api/client';
 import type {
   Sticker,
   Collage,
@@ -13,7 +13,8 @@ import type {
   TemplateApplyResult,
   ReplacementInfo,
   ColorFamily,
-  Plan
+  Plan,
+  ShareVisibility
 } from '../types';
 import { CategoryLabels, HarmonyTypeLabels, ColorFamilyLabels } from '../types';
 import './CollageBoard.css';
@@ -71,6 +72,19 @@ export default function CollageBoard() {
   const [canvasHeight, setCanvasHeight] = useState(840);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const [saveForm, setSaveForm] = useState({ title: '', description: '', collageTags: [] as string[], planId: '' as string });
+  const [publishAfterSave, setPublishAfterSave] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishForm, setPublishForm] = useState({
+    title: '',
+    description: '',
+    themes: [] as string[],
+    newTheme: '',
+    visibility: 'public' as ShareVisibility,
+    allowComments: true,
+    colorFamilies: [] as ColorFamily[]
+  });
+  const [savedCollageId, setSavedCollageId] = useState<string | null>(null);
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -382,16 +396,83 @@ export default function CollageBoard() {
       if (saveForm.planId) {
         data.planId = saveForm.planId;
       }
+      let resultId = id;
       if (id) {
         await collageApi.update(id, data);
       } else {
-        await collageApi.create(data);
+        const result = await collageApi.create(data);
+        resultId = result.id;
       }
-      alert('保存成功！' + (saveForm.planId ? ' 已绑定到创作计划' : ''));
-      setShowSaveModal(false);
-      navigate('/archive');
+
+      if (publishAfterSave && resultId) {
+        setSavedCollageId(resultId);
+        setPublishForm(prev => ({
+          ...prev,
+          title: saveForm.title,
+          description: saveForm.description
+        }));
+        setShowSaveModal(false);
+        setShowPublishModal(true);
+      } else {
+        alert('保存成功！' + (saveForm.planId ? ' 已绑定到创作计划' : ''));
+        setShowSaveModal(false);
+        navigate('/archive');
+      }
     } catch (err) {
       alert('保存失败: ' + (err as Error).message);
+    }
+  }
+
+  function toggleTheme(theme: string) {
+    setPublishForm(prev => ({
+      ...prev,
+      themes: prev.themes.includes(theme)
+        ? prev.themes.filter(t => t !== theme)
+        : [...prev.themes, theme]
+    }));
+  }
+
+  function addNewTheme() {
+    const theme = publishForm.newTheme.trim();
+    if (theme && !publishForm.themes.includes(theme)) {
+      setPublishForm(prev => ({
+        ...prev,
+        themes: [...prev.themes, theme],
+        newTheme: ''
+      }));
+    }
+  }
+
+  function toggleColorFamily(cf: ColorFamily) {
+    setPublishForm(prev => ({
+      ...prev,
+      colorFamilies: prev.colorFamilies.includes(cf)
+        ? prev.colorFamilies.filter(c => c !== cf)
+        : [...prev.colorFamilies, cf]
+    }));
+  }
+
+  async function handlePublish() {
+    if (!savedCollageId || !publishForm.title.trim()) return;
+    setPublishing(true);
+    try {
+      await sharingApi.publishWork({
+        collageId: savedCollageId,
+        title: publishForm.title,
+        description: publishForm.description,
+        themes: publishForm.themes,
+        tags: saveForm.collageTags,
+        visibility: publishForm.visibility,
+        allowComments: publishForm.allowComments,
+        colorFamilies: publishForm.colorFamilies
+      });
+      alert('发布成功！作品已分享到分享墙');
+      setShowPublishModal(false);
+      navigate('/sharing');
+    } catch (err) {
+      alert('发布失败: ' + (err as Error).message);
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -1077,10 +1158,153 @@ export default function CollageBoard() {
                   </div>
                 </div>
               )}
+              {!id && (
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={publishAfterSave}
+                      onChange={e => setPublishAfterSave(e.target.checked)}
+                    />
+                    <span>🌟 保存后发布到分享墙</span>
+                  </label>
+                </div>
+              )}
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>取消</button>
-              <button className="btn btn-primary" onClick={handleSave}>{id ? '更新' : '保存'}</button>
+              <button className="btn btn-primary" onClick={handleSave}>
+                {id ? '更新' : (publishAfterSave ? '保存并发布' : '保存')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPublishModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowPublishModal(false)}>
+          <div className="modal-content modal-lg">
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">🌟 发布作品到分享墙</h3>
+                <p className="modal-subtitle">设置发布信息，让更多人看到你的创意</p>
+              </div>
+              <button className="modal-close" onClick={() => setShowPublishModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="publish-form">
+                <div className="form-group">
+                  <label>展示标题</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="输入作品标题"
+                    value={publishForm.title}
+                    onChange={e => setPublishForm(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>作品说明</label>
+                  <textarea
+                    className="form-textarea"
+                    placeholder="介绍一下你的创作灵感..."
+                    rows={3}
+                    value={publishForm.description}
+                    onChange={e => setPublishForm(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>关联主题</label>
+                  <div className="theme-input-row">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="输入新主题名称"
+                      value={publishForm.newTheme}
+                      onChange={e => setPublishForm(prev => ({ ...prev, newTheme: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTheme())}
+                    />
+                    <button className="btn btn-secondary" onClick={addNewTheme}>添加</button>
+                  </div>
+                  {publishForm.themes.length > 0 && (
+                    <div className="selected-themes">
+                      {publishForm.themes.map(theme => (
+                        <span key={theme} className="theme-tag selected">
+                          🎨 {theme}
+                          <button className="tag-remove-btn" onClick={() => toggleTheme(theme)}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>色系</label>
+                  <div className="color-family-selector">
+                    {(['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'gray', 'monochrome'] as ColorFamily[]).map(cf => (
+                      <button
+                        key={cf}
+                        className={`color-family-btn ${publishForm.colorFamilies.includes(cf) ? 'selected' : ''}`}
+                        onClick={() => toggleColorFamily(cf)}
+                        title={ColorFamilyLabels[cf]}>
+                        <span className={`color-dot-${cf}`} />
+                        <span className="color-name">{ColorFamilyLabels[cf]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group flex-1">
+                    <label>可见性</label>
+                    <div className="visibility-options">
+                      <label className={`visibility-option ${publishForm.visibility === 'public' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={publishForm.visibility === 'public'}
+                          onChange={() => setPublishForm(prev => ({ ...prev, visibility: 'public' }))}
+                        />
+                        <span className="visibility-icon">🌍</span>
+                        <span className="visibility-label">公开</span>
+                        <span className="visibility-desc">所有人可见</span>
+                      </label>
+                      <label className={`visibility-option ${publishForm.visibility === 'private' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={publishForm.visibility === 'private'}
+                          onChange={() => setPublishForm(prev => ({ ...prev, visibility: 'private' }))}
+                        />
+                        <span className="visibility-icon">🔒</span>
+                        <span className="visibility-label">私密</span>
+                        <span className="visibility-desc">仅自己可见</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={publishForm.allowComments}
+                      onChange={e => setPublishForm(prev => ({ ...prev, allowComments: e.target.checked }))}
+                    />
+                    <span>允许其他用户评论</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowPublishModal(false)}>取消</button>
+              <button className="btn btn-primary" onClick={handlePublish} disabled={publishing || !publishForm.title.trim()}>
+                {publishing ? '发布中...' : '🚀 确认发布'}
+              </button>
             </div>
           </div>
         </div>

@@ -15,7 +15,10 @@ import type {
   PlanStatus,
   ColorFamily,
   ProcurementItem,
-  ProcurementStats
+  ProcurementStats,
+  SharedWork,
+  WorkComment,
+  ShareVisibility
 } from '../types';
 
 const api: AxiosInstance = axios.create({
@@ -319,6 +322,107 @@ export const procurementApi = {
   async getAvailableThemes(): Promise<string[]> {
     const response = await api.get('/procurement/themes/available');
     return handleResponse<string[]>(response);
+  }
+};
+
+export const sharingApi = {
+  async getWorks(params?: {
+    theme?: string;
+    tag?: string;
+    colorFamily?: string;
+    sortBy?: string;
+    search?: string;
+    visibility?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ works: SharedWork[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const response = await api.get('/sharing', { params });
+    return handleResponse(response);
+  },
+
+  async getThemes(): Promise<string[]> {
+    const response = await api.get('/sharing/themes');
+    return handleResponse<string[]>(response);
+  },
+
+  async getMyWorks(): Promise<SharedWork[]> {
+    const response = await api.get('/sharing/my');
+    return handleResponse<SharedWork[]>(response);
+  },
+
+  async getWorkById(id: string): Promise<SharedWork & { collage: Collage | null }> {
+    const response = await api.get(`/sharing/${id}`);
+    return handleResponse(response);
+  },
+
+  async publishWork(data: {
+    collageId: string;
+    title?: string;
+    description?: string;
+    themes?: string[];
+    tags?: string[];
+    colorFamilies?: ColorFamily[];
+    visibility?: ShareVisibility;
+    allowComments?: boolean;
+    previewImage?: string;
+  }): Promise<SharedWork> {
+    const response = await api.post('/sharing/publish', data);
+    return handleResponse<SharedWork>(response);
+  },
+
+  async updateWork(id: string, data: Partial<SharedWork>): Promise<SharedWork> {
+    const response = await api.put(`/sharing/${id}`, data);
+    return handleResponse<SharedWork>(response);
+  },
+
+  async unpublishWork(id: string): Promise<void> {
+    const response = await api.delete(`/sharing/${id}`);
+    handleResponse<void>(response);
+  },
+
+  async unpublishByCollageId(collageId: string): Promise<void> {
+    const response = await api.delete(`/sharing/collage/${collageId}`);
+    handleResponse<void>(response);
+  },
+
+  async toggleLike(workId: string): Promise<{ liked: boolean; likeCount: number }> {
+    const response = await api.post(`/sharing/${workId}/like`);
+    return handleResponse(response);
+  },
+
+  async getLikeStatus(workId: string): Promise<{ liked: boolean; favorited: boolean }> {
+    const response = await api.get(`/sharing/${workId}/like-status`);
+    return handleResponse(response);
+  },
+
+  async toggleFavorite(workId: string): Promise<{ favorited: boolean; favoriteCount: number }> {
+    const response = await api.post(`/sharing/${workId}/favorite`);
+    return handleResponse(response);
+  },
+
+  async getComments(workId: string): Promise<WorkComment[]> {
+    const response = await api.get(`/sharing/${workId}/comments`);
+    return handleResponse<WorkComment[]>(response);
+  },
+
+  async addComment(workId: string, content: string): Promise<WorkComment> {
+    const response = await api.post(`/sharing/${workId}/comments`, { content });
+    return handleResponse<WorkComment>(response);
+  },
+
+  async deleteComment(commentId: string): Promise<void> {
+    const response = await api.delete(`/sharing/comments/${commentId}`);
+    handleResponse<void>(response);
+  },
+
+  async getPublishStatus(collageId: string): Promise<{ isPublished: boolean; work: SharedWork | null }> {
+    const response = await api.get(`/sharing/check/publish-status/${collageId}`);
+    return handleResponse(response);
+  },
+
+  async getMyFavorites(): Promise<{ total: number; works: SharedWork[] }> {
+    const response = await api.get('/sharing/stats/favorites');
+    return handleResponse(response);
   }
 };
 

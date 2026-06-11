@@ -1119,3 +1119,202 @@
   content: '💡';
   margin-right: 6px;
 }
+
+.modal-lg {
+  max-width: 600px;
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.publish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.theme-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-input-row .form-input {
+  flex: 1;
+}
+
+.selected-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.theme-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.theme-tag.selected {
+  background: linear-gradient(135deg, #A855F7, #6EC6FF);
+  color: #fff;
+}
+
+.tag-remove-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.8;
+}
+
+.tag-remove-btn:hover {
+  opacity: 1;
+}
+
+.color-family-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-family-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.color-family-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.color-family-btn.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  color: #fff;
+}
+
+.color-dot-red { width: 12px; height: 12px; border-radius: 50%; background: #e74c3c; }
+.color-dot-orange { width: 12px; height: 12px; border-radius: 50%; background: #e67e22; }
+.color-dot-yellow { width: 12px; height: 12px; border-radius: 50%; background: #f1c40f; }
+.color-dot-green { width: 12px; height: 12px; border-radius: 50%; background: #2ecc71; }
+.color-dot-cyan { width: 12px; height: 12px; border-radius: 50%; background: #1abc9c; }
+.color-dot-blue { width: 12px; height: 12px; border-radius: 50%; background: #3498db; }
+.color-dot-purple { width: 12px; height: 12px; border-radius: 50%; background: #9b59b6; }
+.color-dot-pink { width: 12px; height: 12px; border-radius: 50%; background: #ff6b9d; }
+.color-dot-brown { width: 12px; height: 12px; border-radius: 50%; background: #8b4513; }
+.color-dot-gray { width: 12px; height: 12px; border-radius: 50%; background: #7f8c8d; }
+.color-dot-monochrome { width: 12px; height: 12px; border-radius: 50%; background: #2c3e50; }
+
+.color-name {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-group.flex-1 {
+  flex: 1;
+}
+
+.visibility-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.visibility-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.visibility-option input {
+  display: none;
+}
+
+.visibility-option:hover {
+  border-color: var(--primary-light);
+}
+
+.visibility-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  color: #fff;
+}
+
+.visibility-icon {
+  font-size: 24px;
+}
+
+.visibility-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.visibility-desc {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}

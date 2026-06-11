@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collageApi, stickerApi, tagApi } from '../api/client';
-import type { Collage, Sticker, Tag } from '../types';
+import { collageApi, stickerApi, tagApi, sharingApi, templateApi } from '../api/client';
+import type { Collage, Sticker, Tag, ColorFamily, ShareVisibility } from '../types';
+import { ColorFamilyLabels } from '../types';
 import './Archive.css';
 
 type SourceFilter = 'all' | 'original' | 'template';
@@ -18,6 +19,19 @@ export default function Archive() {
   const [selectedTag, setSelectedTag] = useState('');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [previewCollage, setPreviewCollage] = useState<Collage | null>(null);
+  const [publishedMap, setPublishedMap] = useState<Record<string, boolean>>({});
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishingCollage, setPublishingCollage] = useState<Collage | null>(null);
+  const [publishForm, setPublishForm] = useState({
+    title: '',
+    description: '',
+    themes: [] as string[],
+    newTheme: '',
+    visibility: 'public' as ShareVisibility,
+    allowComments: true,
+    colorFamilies: [] as ColorFamily[]
+  });
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -107,10 +121,112 @@ export default function Archive() {
 
   async function handleDelete(id: string) {
     if (!confirm('确定删除此作品吗？此操作无法撤销。')) return;
+    try {
+      await sharingApi.unpublishByCollageId(id).catch(() => {});
+    } catch {}
     await collageApi.delete(id);
     loadData();
   }
 
+  async function loadPublishStatuses() {
+    const statusMap: Record<string, boolean> = {};
+    for (const collage of collages) {
+      try {
+        const status = await sharingApi.getPublishStatus(collage.id);
+        statusMap[collage.id] = status.isPublished;
+      } catch {
+        statusMap[collage.id] = false;
+      }
+    }
+    setPublishedMap(statusMap);
+  }
+
+  useEffect(() => {
+    if (collages.length > 0) {
+      loadPublishStatuses();
+    }
+  }, [collages.length]);
+
+  function openPublishModal(collage: Collage) {
+    setPublishingCollage(collage);
+    setPublishForm({
+      title: collage.title,
+      description: collage.description,
+      themes: [],
+      newTheme: '',
+      visibility: 'public',
+      allowComments: true,
+      colorFamilies: []
+    });
+    setShowPublishModal(true);
+  }
+
+  function toggleTheme(theme: string) {
+    setPublishForm(prev => ({
+      ...prev,
+      themes: prev.themes.includes(theme)
+        ? prev.themes.filter(t => t !== theme)
+        : [...prev.themes, theme]
+    }));
+  }
+
+  function addNewTheme() {
+    const theme = publishForm.newTheme.trim();
+    if (theme && !publishForm.themes.includes(theme)) {
+      setPublishForm(prev => ({
+        ...prev,
+        themes: [...prev.themes, theme],
+        newTheme: ''
+      }));
+    }
+  }
+
+  function toggleColorFamily(cf: ColorFamily) {
+    setPublishForm(prev => ({
+      ...prev,
+      colorFamilies: prev.colorFamilies.includes(cf)
+        ? prev.colorFamilies.filter(c => c !== cf)
+        : [...prev.colorFamilies, cf]
+    }));
+  }
+
+  async function handlePublish() {
+    if (!publishingCollage) return;
+
+    setPublishing(true);
+    try {
+      await sharingApi.publishWork({
+        collageId: publishingCollage.id,
+        title: publishForm.title,
+        description: publishForm.description,
+        themes: publishForm.themes,
+        colorFamilies: publishForm.colorFamilies,
+        visibility: publishForm.visibility,
+        allowComments: publishForm.allowComments
+      });
+
+      setPublishedMap(prev => ({ ...prev, [publishingCollage.id]: true }));
+      setShowPublishModal(false);
+      alert('发布成功！');
+    } catch (err: any) {
+      alert(err.message || '发布失败，请重试');
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleUnpublish(collageId: string) {
+    if (!confirm('确定取消发布此作品吗？取消后其他用户将无法看到。')) return;
+
+    try {
+      await sharingApi.unpublishByCollageId(collageId);
+      setPublishedMap(prev => ({ ...prev, [collageId]: false }));
+    } catch (err: any) {
+      alert(err.message || '取消发布失败');
+    }
+  }
+
+  const publishedCount = Object.values(publishedMap).filter(Boolean).length;
   const allTags = Array.from(new Set(collages.flatMap(c => c.tags)));
   const templateCount = collages.filter(c => c.templateId).length;
   const originalCount = collages.filter(c => !c.templateId).length;
@@ -132,11 +248,16 @@ export default function Archive() {
       <div className="page-header">
         <div>
           <h2 className="page-title">📁 作品归档</h2>
-          <p className="page-subtitle">珍藏你的每一份创意手账作品，共 {collages.length} 个作品（原创 {originalCount} · 模板来源 {templateCount}）</p>
+          <p className="page-subtitle">珍藏你的每一份创意手账作品，共 {collages.length} 个作品（原创 {originalCount} · 模板来源 {templateCount} · 已发布 {publishedCount}）</p>
         </div>
-        <button className="btn btn-primary btn-lg" onClick={() => navigate('/collage')}>
-          <span>✨</span> 新建拼贴
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-secondary btn-lg" onClick={() => navigate('/sharing')}>
+            🌟 去分享墙
+          </button>
+          <button className="btn btn-primary btn-lg" onClick={() => navigate('/collage')}>
+            <span>✨</span> 新建拼贴
+          </button>
+        </div>
       </div>
 
       <div className="filter-bar card">
@@ -216,6 +337,11 @@ export default function Archive() {
                     📋 模板
                   </div>
                 )}
+                {publishedMap[collage.id] && (
+                  <div className="published-badge" title="已发布到分享墙">
+                    🌟 已发布
+                  </div>
+                )}
                 <div className="collage-overlay">
                   <span className="overlay-btn">🔍 预览</span>
                 </div>
@@ -247,6 +373,15 @@ export default function Archive() {
                   <button className="btn btn-secondary btn-sm" onClick={() => openPreview(collage)}>
                     👁️ 查看
                   </button>
+                  {publishedMap[collage.id] ? (
+                    <button className="btn btn-warning btn-sm" onClick={() => handleUnpublish(collage.id)} title="取消发布">
+                      📤 取消发布
+                    </button>
+                  ) : (
+                    <button className="btn btn-success btn-sm" onClick={() => openPublishModal(collage)} title="发布到分享墙">
+                      🌟 发布
+                    </button>
+                  )}
                   <button className="btn btn-danger btn-sm" onClick={() => handleDelete(collage.id)}>
                     🗑️
                   </button>
@@ -323,6 +458,135 @@ export default function Archive() {
               <button className="btn btn-secondary" onClick={() => setPreviewCollage(null)}>关闭</button>
               <button className="btn btn-primary" onClick={() => navigate(`/collage/${previewCollage.id}`)}>
                 编辑此作品
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPublishModal && publishingCollage && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowPublishModal(false)}>
+          <div className="modal-content modal-lg">
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">🌟 发布作品到分享墙</h3>
+                <p className="modal-subtitle">设置发布信息，让更多人看到你的创意</p>
+              </div>
+              <button className="modal-close" onClick={() => setShowPublishModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="publish-form">
+                <div className="form-group">
+                  <label>展示标题</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="输入作品标题"
+                    value={publishForm.title}
+                    onChange={e => setPublishForm(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>作品说明</label>
+                  <textarea
+                    className="form-textarea"
+                    placeholder="介绍一下你的创作灵感..."
+                    rows={3}
+                    value={publishForm.description}
+                    onChange={e => setPublishForm(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>关联主题</label>
+                  <div className="theme-input-row">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="输入新主题名称"
+                      value={publishForm.newTheme}
+                      onChange={e => setPublishForm(prev => ({ ...prev, newTheme: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTheme())}
+                    />
+                    <button className="btn btn-secondary" onClick={addNewTheme}>添加</button>
+                  </div>
+                  {publishForm.themes.length > 0 && (
+                    <div className="selected-themes">
+                      {publishForm.themes.map(theme => (
+                        <span key={theme} className="theme-tag selected">
+                          🎨 {theme}
+                          <button className="tag-remove-btn" onClick={() => toggleTheme(theme)}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>色系</label>
+                  <div className="color-family-selector">
+                    {(['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'gray', 'monochrome'] as ColorFamily[]).map(cf => (
+                      <button
+                        key={cf}
+                        className={`color-family-btn ${publishForm.colorFamilies.includes(cf) ? 'selected' : ''}`}
+                        onClick={() => toggleColorFamily(cf)}
+                        title={ColorFamilyLabels[cf]}>
+                        <span className={`color-dot-${cf}`} />
+                        <span className="color-name">{ColorFamilyLabels[cf]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group flex-1">
+                    <label>可见性</label>
+                    <div className="visibility-options">
+                      <label className={`visibility-option ${publishForm.visibility === 'public' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={publishForm.visibility === 'public'}
+                          onChange={() => setPublishForm(prev => ({ ...prev, visibility: 'public' }))}
+                        />
+                        <span className="visibility-icon">🌍</span>
+                        <span className="visibility-label">公开</span>
+                        <span className="visibility-desc">所有人可见</span>
+                      </label>
+                      <label className={`visibility-option ${publishForm.visibility === 'private' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={publishForm.visibility === 'private'}
+                          onChange={() => setPublishForm(prev => ({ ...prev, visibility: 'private' }))}
+                        />
+                        <span className="visibility-icon">🔒</span>
+                        <span className="visibility-label">私密</span>
+                        <span className="visibility-desc">仅自己可见</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={publishForm.allowComments}
+                      onChange={e => setPublishForm(prev => ({ ...prev, allowComments: e.target.checked }))}
+                    />
+                    <span>允许其他用户评论</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowPublishModal(false)}>取消</button>
+              <button className="btn btn-primary" onClick={handlePublish} disabled={publishing || !publishForm.title.trim()}>
+                {publishing ? '发布中...' : '🚀 确认发布'}
               </button>
             </div>
           </div>

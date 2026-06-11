@@ -7,6 +7,7 @@ import CollageBoard from './pages/CollageBoard';
 import Archive from './pages/Archive';
 import Statistics from './pages/Statistics';
 import Procurement from './pages/Procurement';
+import SharingWall from './pages/SharingWall';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="collage" element={<CollageBoard />} />
         <Route path="collage/:id" element={<CollageBoard />} />
         <Route path="archive" element={<Archive />} />
+        <Route path="sharing" element={<SharingWall />} />
         <Route path="procurement" element={<Procurement />} />
         <Route path="statistics" element={<Statistics />} />
       </Route>

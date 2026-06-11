@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { stickerStore, tagStore, collageStore, templateStore, replacementStore, planStore, procurementStore } from '../storage/store';
-import { ColorFamily, Statistics, StickerCategory, StickerSource, Plan, ProcurementItemType, ProcurementStats } from '../types';
+import { stickerStore, tagStore, collageStore, templateStore, replacementStore, planStore, procurementStore, sharedWorkStore, workLikeStore, workFavoriteStore, workCommentStore } from '../storage/store';
+import { ColorFamily, Statistics, StickerCategory, StickerSource, Plan, ProcurementItemType, ProcurementStats, SharingStats } from '../types';
 import { getColorHarmonySuggestions } from '../utils/colorUtils';
 
 const router = Router();
@@ -280,6 +280,143 @@ router.get('/', (req: Request, res: Response) => {
       underStockedThemes: []
     };
 
+    const sharedWorks = sharedWorkStore.getAll();
+    const publicWorks = sharedWorks.filter(w => w.visibility === 'public');
+    const privateWorks = sharedWorks.filter(w => w.visibility === 'private');
+
+    const totalLikes = sharedWorks.reduce((sum, w) => sum + w.likeCount, 0);
+    const totalFavorites = sharedWorks.reduce((sum, w) => sum + w.favoriteCount, 0);
+    const totalComments = sharedWorks.reduce((sum, w) => sum + w.commentCount, 0);
+    const totalViews = sharedWorks.reduce((sum, w) => sum + w.viewCount, 0);
+
+    const interactionMap: Record<string, { likes: number; favorites: number; comments: number; views: number }> = {};
+
+    const likes = workLikeStore.getAll();
+    const favorites = workFavoriteStore.getAll();
+    const comments = workCommentStore.getAll();
+
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0];
+      interactionMap[dateStr] = { likes: 0, favorites: 0, comments: 0, views: 0 };
+    }
+
+    for (const like of likes) {
+      const dateStr = like.createdAt.split('T')[0];
+      if (interactionMap[dateStr]) {
+        interactionMap[dateStr].likes++;
+      }
+    }
+    for (const fav of favorites) {
+      const dateStr = fav.createdAt.split('T')[0];
+      if (interactionMap[dateStr]) {
+        interactionMap[dateStr].favorites++;
+      }
+    }
+    for (const comment of comments) {
+      const dateStr = comment.createdAt.split('T')[0];
+      if (interactionMap[dateStr]) {
+        interactionMap[dateStr].comments++;
+      }
+    }
+    for (const work of sharedWorks) {
+      const dateStr = work.publishedAt.split('T')[0];
+      if (interactionMap[dateStr]) {
+        interactionMap[dateStr].views += work.viewCount;
+      }
+    }
+
+    const interactionTrend = Object.entries(interactionMap)
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const sharingThemeMap: Record<string, { workCount: number; interactionCount: number }> = {};
+    for (const work of publicWorks) {
+      const interactionScore = work.likeCount + work.favoriteCount + work.commentCount;
+      for (const theme of work.themes) {
+        if (!sharingThemeMap[theme]) {
+          sharingThemeMap[theme] = { workCount: 0, interactionCount: 0 };
+        }
+        sharingThemeMap[theme].workCount++;
+        sharingThemeMap[theme].interactionCount += interactionScore;
+      }
+    }
+    const topThemes = Object.entries(sharingThemeMap)
+      .map(([theme, stats]) => ({ theme, ...stats }))
+      .sort((a, b) => b.interactionCount - a.interactionCount)
+      .slice(0, 10);
+
+    const mostPopularWorks = publicWorks
+      .map(w => ({
+        workId: w.id,
+        title: w.title,
+        likeCount: w.likeCount,
+        favoriteCount: w.favoriteCount,
+        commentCount: w.commentCount,
+        viewCount: w.viewCount,
+        totalScore: w.likeCount * 3 + w.favoriteCount * 2 + w.commentCount * 5 + w.viewCount
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, 10);
+
+    const likeFavoriteConversionRate = totalLikes > 0
+      ? Math.round((totalFavorites / totalLikes) * 100)
+      : 0;
+
+    const stickerFeedbackMap: Record<string, { likes: number; favorites: number; comments: number; feedbackCount: number; workCount: number; usageCount: number }> = {};
+    for (const work of publicWorks) {
+      const collage = collageStore.getById(work.collageId);
+      if (!collage) continue;
+      const stickerCounts: Record<string, number> = {};
+      for (const elem of collage.elements) {
+        if (elem.stickerId) {
+          stickerCounts[elem.stickerId] = (stickerCounts[elem.stickerId] || 0) + 1;
+        }
+      }
+      for (const [stickerId, count] of Object.entries(stickerCounts)) {
+        if (!stickerFeedbackMap[stickerId]) {
+          stickerFeedbackMap[stickerId] = { likes: 0, favorites: 0, comments: 0, feedbackCount: 0, workCount: 0, usageCount: 0 };
+        }
+        stickerFeedbackMap[stickerId].likes += work.likeCount;
+        stickerFeedbackMap[stickerId].favorites += work.favoriteCount;
+        stickerFeedbackMap[stickerId].comments += work.commentCount;
+        stickerFeedbackMap[stickerId].feedbackCount += work.likeCount + work.favoriteCount + work.commentCount;
+        stickerFeedbackMap[stickerId].workCount++;
+        stickerFeedbackMap[stickerId].usageCount += count;
+      }
+    }
+    const mostFeedbackMaterials = Object.entries(stickerFeedbackMap)
+      .map(([stickerId, stats]) => {
+        const sticker = stickerStore.getById(stickerId);
+        return {
+          stickerId,
+          stickerName: sticker?.name || '未知素材',
+          likes: stats.likes,
+          favorites: stats.favorites,
+          comments: stats.comments,
+          feedbackCount: stats.feedbackCount,
+          workCount: stats.workCount,
+          usageCount: stats.usageCount
+        };
+      })
+      .sort((a, b) => b.feedbackCount - a.feedbackCount)
+      .slice(0, 10);
+
+    const sharingStats: SharingStats = {
+      totalPublishedWorks: sharedWorks.length,
+      publicWorksCount: publicWorks.length,
+      privateWorksCount: privateWorks.length,
+      totalLikes,
+      totalFavorites,
+      totalComments,
+      totalViews,
+      interactionTrend,
+      topThemes,
+      mostPopularWorks,
+      likeFavoriteConversionRate,
+      mostFeedbackMaterials
+    };
+
     const stats: Statistics = {
       totalStickers: stickers.length,
       totalCollages: collages.length,
@@ -305,7 +442,8 @@ router.get('/', (req: Request, res: Response) => {
         materialReuseRate,
         weeklyTrend
       },
-      procurementStats
+      procurementStats,
+      sharingStats
     };
 
     res.json({ success: true, data: stats });

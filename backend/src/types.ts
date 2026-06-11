@@ -199,6 +199,78 @@ export interface PlanStatistics {
   weeklyTrend: { week: string; total: number; completed: number }[];
 }
 
+export type ShareVisibility = 'public' | 'private';
+
+export interface SharedWork {
+  id: string;
+  collageId: string;
+  title: string;
+  description: string;
+  themes: string[];
+  tags: string[];
+  colorFamilies: ColorFamily[];
+  visibility: ShareVisibility;
+  allowComments: boolean;
+  authorId: string;
+  authorName: string;
+  likeCount: number;
+  favoriteCount: number;
+  commentCount: number;
+  viewCount: number;
+  materialCount: number;
+  previewImage?: string;
+  publishedAt: string;
+  updatedAt: string;
+}
+
+export interface WorkLike {
+  id: string;
+  workId: string;
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+
+export interface WorkFavorite {
+  id: string;
+  workId: string;
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+
+export interface WorkComment {
+  id: string;
+  workId: string;
+  userId: string;
+  userName: string;
+  content: string;
+  isBlocked: boolean;
+  createdAt: string;
+}
+
+export interface SensitiveWord {
+  id: string;
+  word: string;
+  category: string;
+  createdAt: string;
+}
+
+export interface SharingStats {
+  totalPublishedWorks: number;
+  publicWorksCount: number;
+  privateWorksCount: number;
+  totalLikes: number;
+  totalFavorites: number;
+  totalComments: number;
+  totalViews: number;
+  interactionTrend: { date: string; likes: number; favorites: number; comments: number; views: number }[];
+  topThemes: { theme: string; workCount: number; interactionCount: number }[];
+  mostPopularWorks: { workId: string; title: string; likeCount: number; favoriteCount: number; commentCount: number; viewCount: number; totalScore: number }[];
+  likeFavoriteConversionRate: number;
+  mostFeedbackMaterials: { stickerId: string; stickerName: string; likes: number; favorites: number; comments: number; feedbackCount: number; workCount: number; usageCount: number }[];
+}
+
 export interface Statistics {
   totalStickers: number;
   totalCollages: number;
@@ -216,4 +288,5 @@ export interface Statistics {
   topTemplates: { templateId: string; name: string; usageCount: number }[];
   planStats?: PlanStatistics;
   procurementStats?: ProcurementStats;
+  sharingStats?: SharingStats;
 }

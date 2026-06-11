@@ -1,0 +1,23 @@
+[
+  {
+    "id": "d9f7ced6-1780-4de9-a158-8c271c0b80e5",
+    "name": "复验樱花胶带",
+    "itemType": "tape",
+    "budget": 28.5,
+    "channel": "淘宝",
+    "priority": "high",
+    "themes": [
+      "旅行"
+    ],
+    "targetColorFamily": "pink",
+    "expectedStockDate": "2026-06-12",
+    "status": "stocked",
+    "notes": "采购模块复验",
+    "createdAt": "2026-06-11T06:36:11.478Z",
+    "updatedAt": "2026-06-11T06:36:53.617Z",
+    "actualCost": 26.8,
+    "purchasedAt": "2026-06-11T06:36:25.448Z",
+    "convertedStickerId": "44e7e0a2-a4a9-468e-8f99-3d2993d2473c",
+    "stockedAt": "2026-06-11T06:36:53.617Z"
+  }
+]

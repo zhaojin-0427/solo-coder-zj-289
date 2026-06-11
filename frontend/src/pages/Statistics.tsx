@@ -157,6 +157,38 @@ export default function Statistics() {
             </div>
           </>
         )}
+        {stats.sharingStats && (
+          <>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)', color: '#fff' }}>
+              <div className="stat-icon">🌟</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.sharingStats.totalPublishedWorks}</div>
+                <div className="stat-label">已发布作品</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)', color: '#fff' }}>
+              <div className="stat-icon">❤️</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.sharingStats.totalLikes}</div>
+                <div className="stat-label">获赞总数</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FFD93D 0%, #FF9A76 100%)', color: '#fff' }}>
+              <div className="stat-icon">⭐</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.sharingStats.totalFavorites}</div>
+                <div className="stat-label">收藏总数</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #A855F7 0%, #6EC6FF 100%)', color: '#fff' }}>
+              <div className="stat-icon">💬</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.sharingStats.totalComments}</div>
+                <div className="stat-label">评论总数</div>
+              </div>
+            </div>
+          </>
+        )}
         {stats.procurementStats && (
           <>
             <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF9A76 0%, #FFD93D 100%)', color: '#333' }}>
@@ -716,6 +748,222 @@ export default function Statistics() {
                   </div>
                 </div>
               </div>
+            </div>
+          </>
+        )}
+
+        {stats.sharingStats && (
+          <>
+            <div className="stats-section card card-wide">
+              <div className="section-header">
+                <h3 className="section-title">📈 公开作品互动趋势</h3>
+                <span className="section-badge">近30天</span>
+              </div>
+              {stats.sharingStats.interactionTrend.length === 0 ? (
+                <div className="empty-mini">暂无互动数据</div>
+              ) : (
+                <>
+                  <div className="trend-chart">
+                    {(() => {
+                      const maxVal = Math.max(...stats.sharingStats!.interactionTrend.map(d => Math.max(d.likes, d.favorites, d.comments, d.views)), 1);
+                      return stats.sharingStats!.interactionTrend.map(item => (
+                        <div key={item.date} className="trend-bar-col">
+                          <div className="trend-bar-wrap">
+                            <div className="trend-bar-group">
+                              <div className="trend-bar trend-bar-views"
+                                style={{ height: `${(item.views / maxVal) * 100}%` }}
+                                title={`浏览: ${item.views}`}>
+                              </div>
+                              <div className="trend-bar trend-bar-likes"
+                                style={{ height: `${(item.likes / maxVal) * 100}%` }}
+                                title={`点赞: ${item.likes}`}>
+                              </div>
+                              <div className="trend-bar trend-bar-favorites"
+                                style={{ height: `${(item.favorites / maxVal) * 100}%` }}
+                                title={`收藏: ${item.favorites}`}>
+                              </div>
+                              <div className="trend-bar trend-bar-comments"
+                                style={{ height: `${(item.comments / maxVal) * 100}%` }}
+                                title={`评论: ${item.comments}`}>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="trend-label">{item.date.slice(5)}</div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  <div className="trend-legend">
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#9CA3AF' }} />
+                      <span className="legend-label">浏览</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#FF6B6B' }} />
+                      <span className="legend-label">点赞</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#FFD93D' }} />
+                      <span className="legend-label">收藏</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#A855F7' }} />
+                      <span className="legend-label">评论</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">🏆 热门主题排行</h3>
+                <span className="section-badge">{stats.sharingStats.topThemes.length} 个主题</span>
+              </div>
+              {stats.sharingStats.topThemes.length === 0 ? (
+                <div className="empty-mini">暂无主题数据</div>
+              ) : (
+                <div className="tag-ranking">
+                  {(() => {
+                    const maxCount = Math.max(...stats.sharingStats!.topThemes.map(t => t.workCount), 1);
+                    return stats.sharingStats!.topThemes.map((theme, idx) => (
+                      <div key={theme.theme} className="tag-rank-item">
+                        <div className={`rank-number ${idx < 3 ? 'top' : ''}`}>
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                        </div>
+                        <div className="rank-bar-wrap">
+                          <div className="rank-info">
+                            <span className="rank-name">{theme.theme}</span>
+                            <span className="rank-count">{theme.workCount} 作品 · {theme.interactionCount} 互动</span>
+                          </div>
+                          <div className="rank-bar-bg">
+                            <div className="rank-bar-fill"
+                              style={{
+                                width: `${(theme.workCount / maxCount) * 100}%`,
+                                background: 'linear-gradient(90deg, #10B981, #34D399)'
+                              }} />
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">🌟 最受欢迎作品</h3>
+                <span className="section-badge">Top {stats.sharingStats.mostPopularWorks.length}</span>
+              </div>
+              {stats.sharingStats.mostPopularWorks.length === 0 ? (
+                <div className="empty-mini">暂无作品数据</div>
+              ) : (
+                <div className="popular-works-list">
+                  {stats.sharingStats.mostPopularWorks.map((work, idx) => (
+                    <div key={work.workId} className="popular-work-item">
+                      <div className={`popular-work-rank ${idx < 3 ? 'top' : ''}`}>
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div className="popular-work-info">
+                        <div className="popular-work-title" title={work.title}>{work.title}</div>
+                        <div className="popular-work-meta">
+                          <span className="work-meta-item">❤️ {work.likeCount}</span>
+                          <span className="work-meta-item">⭐ {work.favoriteCount}</span>
+                          <span className="work-meta-item">💬 {work.commentCount}</span>
+                          <span className="work-meta-item">👁️ {work.viewCount}</span>
+                        </div>
+                      </div>
+                      <div className="popular-work-score">
+                        <div className="score-value">{work.totalScore}</div>
+                        <div className="score-label">热度</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">📊 点赞收藏转化率</h3>
+                <span className="section-badge">{stats.sharingStats.likeFavoriteConversionRate}%</span>
+              </div>
+              <div className="conversion-rate-display">
+                <div className="conv-rate-ring">
+                  <svg viewBox="0 0 100 100" className="donut-svg">
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#f0e6dc" strokeWidth="14" />
+                    <circle cx="50" cy="50" r="36" fill="none"
+                      stroke={stats.sharingStats.likeFavoriteConversionRate >= 50 ? '#6BCB77' : stats.sharingStats.likeFavoriteConversionRate >= 30 ? '#FFD93D' : '#FF6B6B'}
+                      strokeWidth="14"
+                      strokeDasharray={`${(stats.sharingStats.likeFavoriteConversionRate / 100) * 2 * Math.PI * 36} ${2 * Math.PI * 36}`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 50 50)"
+                      style={{ transition: 'all 0.5s' }} />
+                    <text x="50" y="48" textAnchor="middle" className="donut-text-value">{stats.sharingStats.likeFavoriteConversionRate}%</text>
+                    <text x="50" y="60" textAnchor="middle" className="donut-text-label">转化率</text>
+                  </svg>
+                </div>
+                <div className="conv-rate-details">
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">❤️ 总点赞数</span>
+                    <span className="conv-detail-value">{stats.sharingStats.totalLikes}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">⭐ 总收藏数</span>
+                    <span className="conv-detail-value">{stats.sharingStats.totalFavorites}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">🌍 公开作品</span>
+                    <span className="conv-detail-value">{stats.sharingStats.publicWorksCount}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">🔒 私密作品</span>
+                    <span className="conv-detail-value">{stats.sharingStats.privateWorksCount}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">👁️ 总浏览量</span>
+                    <span className="conv-detail-value">{stats.sharingStats.totalViews}</span>
+                  </div>
+                  <div className="conv-detail-row">
+                    <span className="conv-detail-label">💬 总评论数</span>
+                    <span className="conv-detail-value">{stats.sharingStats.totalComments}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="stats-section card">
+              <div className="section-header">
+                <h3 className="section-title">🎯 收到反馈最多的素材</h3>
+                <span className="section-badge">Top {stats.sharingStats.mostFeedbackMaterials.length}</span>
+              </div>
+              {stats.sharingStats.mostFeedbackMaterials.length === 0 ? (
+                <div className="empty-mini">暂无素材数据</div>
+              ) : (
+                <div className="feedback-materials-list">
+                  {stats.sharingStats.mostFeedbackMaterials.map((material, idx) => (
+                    <div key={material.stickerId} className="feedback-material-item">
+                      <div className={`feedback-material-rank ${idx < 3 ? 'top' : ''}`}>
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div className="feedback-material-info">
+                        <div className="feedback-material-name" title={material.stickerName}>{material.stickerName}</div>
+                        <div className="feedback-material-meta">
+                          <span className="material-meta-item">❤️ {material.likes} 点赞</span>
+                          <span className="material-meta-item">⭐ {material.favorites} 收藏</span>
+                          <span className="material-meta-item">💬 {material.comments} 评论</span>
+                          <span className="material-meta-item">📝 {material.usageCount} 次使用</span>
+                        </div>
+                      </div>
+                      <div className="feedback-material-score">
+                        <div className="score-value">{material.feedbackCount}</div>
+                        <div className="score-label">总反馈</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}

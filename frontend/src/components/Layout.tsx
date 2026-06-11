@@ -7,6 +7,7 @@ const navItems = [
   { to: '/calendar', label: '创作日历', icon: '📅' },
   { to: '/collage', label: '虚拟拼贴台', icon: '✂️' },
   { to: '/archive', label: '作品归档', icon: '📁' },
+  { to: '/sharing', label: '分享墙', icon: '🌟' },
   { to: '/procurement', label: '采购补货', icon: '🛒' },
   { to: '/statistics', label: '数据统计', icon: '📊' }
 ];
