@@ -41,7 +41,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
 router.post('/', (req: Request, res: Response) => {
   try {
-    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags } = req.body;
+    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName } = req.body;
 
     if (!title || !elements) {
       return res.status(400).json({ success: false, error: '缺少必填字段' });
@@ -56,6 +56,8 @@ router.post('/', (req: Request, res: Response) => {
       canvasWidth: canvasWidth || 800,
       canvasHeight: canvasHeight || 1100,
       tags: tags || [],
+      templateId,
+      templateName,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -64,7 +66,7 @@ router.post('/', (req: Request, res: Response) => {
 
     const stickerIds = [...new Set(elements.map((e: { stickerId: string }) => e.stickerId))];
     for (const id of stickerIds) {
-      stickerStore.incrementUsage(id);
+      stickerStore.incrementUsage(id as string);
     }
 
     if (tags && tags.length > 0) {
@@ -80,7 +82,7 @@ router.post('/', (req: Request, res: Response) => {
 
 router.put('/:id', (req: Request, res: Response) => {
   try {
-    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags } = req.body;
+    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName } = req.body;
     const updates: Partial<Collage> = {};
 
     if (title !== undefined) updates.title = title;
@@ -90,6 +92,8 @@ router.put('/:id', (req: Request, res: Response) => {
     if (canvasWidth !== undefined) updates.canvasWidth = canvasWidth;
     if (canvasHeight !== undefined) updates.canvasHeight = canvasHeight;
     if (tags !== undefined) updates.tags = tags;
+    if (templateId !== undefined) updates.templateId = templateId;
+    if (templateName !== undefined) updates.templateName = templateName;
 
     const updated = collageStore.update(req.params.id, updates);
     if (!updated) {

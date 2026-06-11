@@ -83,10 +83,10 @@ export default function Statistics() {
           </div>
         </div>
         <div className="stat-card stat-card-accent">
-          <div className="stat-icon">🏷️</div>
+          <div className="stat-icon">📋</div>
           <div className="stat-content">
-            <div className="stat-value">{stats.topTags.length}</div>
-            <div className="stat-label">已使用标签</div>
+            <div className="stat-value">{stats.totalTemplates || 0}</div>
+            <div className="stat-label">模板数量</div>
           </div>
         </div>
         <div className="stat-card stat-card-warning">
@@ -94,6 +94,20 @@ export default function Statistics() {
           <div className="stat-content">
             <div className="stat-value">{stats.unusedStickers.length}</div>
             <div className="stat-label">待激活素材</div>
+          </div>
+        </div>
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #A855F7 0%, #6EC6FF 100%)', color: '#fff' }}>
+          <div className="stat-icon">🔄</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.templateUsageCount || 0}</div>
+            <div className="stat-label">模板使用次数</div>
+          </div>
+        </div>
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #6BCB77 0%, #4D96FF 100%)', color: '#fff' }}>
+          <div className="stat-icon">📊</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.templateReuseRate || 0}%</div>
+            <div className="stat-label">模板复用率</div>
           </div>
         </div>
       </div>
@@ -273,6 +287,127 @@ export default function Statistics() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="stats-section card">
+          <div className="section-header">
+            <h3 className="section-title">📈 模板转化作品趋势</h3>
+            <span className="section-badge">模板 vs 作品</span>
+          </div>
+          {!stats.templateConversionTrend || stats.templateConversionTrend.length === 0 ? (
+            <div className="empty-mini">暂无模板使用记录</div>
+          ) : (
+            <>
+              <div className="conv-chart">
+                {stats.templateConversionTrend.map(item => {
+                  const maxVal = Math.max(...stats.templateConversionTrend!.map(t => Math.max(t.templateCount, t.collageCount)), 1);
+                  return (
+                    <div key={item.month} className="conv-bar-col">
+                      <div className="conv-bar-wrap">
+                        <div className="conv-bar-group">
+                          <div className="conv-bar conv-bar-template"
+                            style={{ height: `${(item.templateCount / maxVal) * 100}%` }}
+                            title={`模板创建: ${item.templateCount} 个`}>
+                            <span className="conv-bar-value">{item.templateCount}</span>
+                          </div>
+                          <div className="conv-bar conv-bar-collage"
+                            style={{ height: `${(item.collageCount / maxVal) * 100}%` }}
+                            title={`模板衍生作品: ${item.collageCount} 个`}>
+                            <span className="conv-bar-value">{item.collageCount}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="conv-label">{item.month.slice(5)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="conv-legend">
+                <div className="legend-item">
+                  <span className="legend-dot" style={{ backgroundColor: '#A855F7' }} />
+                  <span className="legend-label">新建模板数</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-dot" style={{ backgroundColor: '#6EC6FF' }} />
+                  <span className="legend-label">模板衍生作品数</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="stats-section card">
+          <div className="section-header">
+            <h3 className="section-title">🔄 最常被替换的素材分类</h3>
+            <span className="section-badge">智能替换分析</span>
+          </div>
+          {!stats.mostReplacedCategories || stats.mostReplacedCategories.length === 0 ? (
+            <div className="empty-mini">暂无素材替换记录</div>
+          ) : (
+            <>
+              <div className="replaced-cat-list">
+                {(() => {
+                  const maxReplaceCount = Math.max(...stats.mostReplacedCategories!.map(c => c.count), 1);
+                  return stats.mostReplacedCategories!.map((item, idx) => (
+                    <div key={item.category} className="replaced-cat-item">
+                      <div className="replaced-rank">
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div className="replaced-info">
+                        <div className="replaced-name-row">
+                          <span className="replaced-name">{CategoryLabels[item.category] || item.category}</span>
+                          <span className="replaced-count">{item.count} 次</span>
+                        </div>
+                        <div className="replaced-bar-bg">
+                          <div className="replaced-bar-fill"
+                            style={{
+                              width: `${(item.count / maxReplaceCount) * 100}%`,
+                              backgroundColor: getCategoryColor(item.category)
+                            }} />
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+              <p className="template-hint">
+                💡 以上分类的素材最常被智能替换，建议扩充该分类的素材库以提升模板复用效果
+              </p>
+            </>
+          )}
+        </div>
+
+        <div className="stats-section card card-wide">
+          <div className="section-header">
+            <h3 className="section-title">🏆 热门模板排行榜</h3>
+            <span className="section-badge">TOP 5</span>
+          </div>
+          {!stats.topTemplates || stats.topTemplates.length === 0 ? (
+            <div className="empty-mini">暂无模板数据</div>
+          ) : (
+            <div className="top-templates-list">
+              {stats.topTemplates.map((tpl, idx) => (
+                <div key={tpl.templateId} className="top-template-item">
+                  <div className={`top-tpl-rank ${idx < 3 ? 'top' : ''}`}>
+                    {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                  </div>
+                  <div className="top-tpl-info">
+                    <div className="top-tpl-name">{tpl.name}</div>
+                    <div className="top-tpl-bar-bg">
+                      <div className="top-tpl-bar-fill"
+                        style={{
+                          width: `${(tpl.usageCount / Math.max(...stats.topTemplates!.map(t => t.usageCount), 1)) * 100}%`
+                        }} />
+                    </div>
+                  </div>
+                  <div className="top-tpl-count">
+                    <strong>{tpl.usageCount}</strong>
+                    <span>次使用</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="stats-section card card-wide">

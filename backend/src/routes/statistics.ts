@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { stickerStore, tagStore, collageStore } from '../storage/store';
+import { stickerStore, tagStore, collageStore, templateStore, replacementStore } from '../storage/store';
 import { ColorFamily, Statistics, StickerCategory, StickerSource } from '../types';
 import { getColorHarmonySuggestions } from '../utils/colorUtils';
 
@@ -10,6 +10,8 @@ router.get('/', (req: Request, res: Response) => {
     const stickers = stickerStore.getAll();
     const tags = tagStore.getAll();
     const collages = collageStore.getAll();
+    const templates = templateStore.getAll();
+    const replacements = replacementStore.getAll();
     const now = new Date();
 
     const colorFamilyMap: Record<string, number> = {};
@@ -81,6 +83,44 @@ router.get('/', (req: Request, res: Response) => {
     const sourceDistribution = (Object.entries(sourceMap) as [StickerSource, number][])
       .map(([source, count]) => ({ source, count }));
 
+    const templateUsageCount = templates.reduce((sum, t) => sum + t.usageCount, 0);
+    const templateDerivedCollages = collages.filter(c => c.templateId).length;
+    const templateReuseRate = collages.length > 0
+      ? Math.round((templateDerivedCollages / collages.length) * 100)
+      : 0;
+
+    const templateConvMap: Record<string, { templateCount: number; collageCount: number }> = {};
+    for (const t of templates) {
+      const date = new Date(t.createdAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!templateConvMap[month]) templateConvMap[month] = { templateCount: 0, collageCount: 0 };
+      templateConvMap[month].templateCount += 1;
+    }
+    for (const c of collages) {
+      if (!c.templateId) continue;
+      const date = new Date(c.createdAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!templateConvMap[month]) templateConvMap[month] = { templateCount: 0, collageCount: 0 };
+      templateConvMap[month].collageCount += 1;
+    }
+    const templateConversionTrend = Object.entries(templateConvMap)
+      .map(([month, counts]) => ({ month, ...counts }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    const replacedCatMap: Record<string, number> = {};
+    for (const r of replacements) {
+      replacedCatMap[r.originalStickerCategory] = (replacedCatMap[r.originalStickerCategory] || 0) + 1;
+    }
+    const mostReplacedCategories = (Object.entries(replacedCatMap) as [StickerCategory, number][])
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const topTemplates = templates
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, 5)
+      .map(t => ({ templateId: t.id, name: t.name, usageCount: t.usageCount }));
+
     const stats: Statistics = {
       totalStickers: stickers.length,
       totalCollages: collages.length,
@@ -89,7 +129,13 @@ router.get('/', (req: Request, res: Response) => {
       monthlyTrend,
       unusedStickers,
       categoryDistribution,
-      sourceDistribution
+      sourceDistribution,
+      totalTemplates: templates.length,
+      templateUsageCount,
+      templateConversionTrend,
+      mostReplacedCategories,
+      templateReuseRate,
+      topTemplates
     };
 
     res.json({ success: true, data: stats });

@@ -3,9 +3,12 @@ import type {
   Sticker,
   Tag,
   Collage,
+  CollageTemplate,
   Statistics,
   ColorHarmonyResult,
-  ApiResponse
+  ApiResponse,
+  TemplateApplyMode,
+  TemplateApplyResult
 } from '../types';
 
 const api: AxiosInstance = axios.create({
@@ -104,6 +107,60 @@ export const collageApi = {
 
   async delete(id: string): Promise<void> {
     const response = await api.delete(`/collages/${id}`);
+    handleResponse<void>(response);
+  }
+};
+
+export const templateApi = {
+  async getAll(params?: {
+    theme?: string;
+    tag?: string;
+    colorFamily?: string;
+    canvasWidth?: number;
+    canvasHeight?: number;
+    search?: string;
+  }): Promise<CollageTemplate[]> {
+    const response = await api.get('/templates', { params });
+    return handleResponse<CollageTemplate[]>(response);
+  },
+
+  async getThemes(): Promise<string[]> {
+    const response = await api.get('/templates/themes');
+    return handleResponse<string[]>(response);
+  },
+
+  async getSizes(): Promise<{ width: number; height: number; label: string }[]> {
+    const response = await api.get('/templates/sizes');
+    return handleResponse<{ width: number; height: number; label: string }[]>(response);
+  },
+
+  async getById(id: string): Promise<CollageTemplate> {
+    const response = await api.get(`/templates/${id}`);
+    return handleResponse<CollageTemplate>(response);
+  },
+
+  async create(data: {
+    name: string;
+    description?: string;
+    collageId?: string;
+    themes?: string[];
+  }): Promise<CollageTemplate> {
+    const response = await api.post('/templates', data);
+    return handleResponse<CollageTemplate>(response);
+  },
+
+  async apply(id: string, mode: TemplateApplyMode): Promise<TemplateApplyResult> {
+    const response = await api.post(`/templates/${id}/apply`, { mode });
+    return handleResponse<TemplateApplyResult>(response);
+  },
+
+  async update(id: string, data: Partial<CollageTemplate>): Promise<CollageTemplate> {
+    const response = await api.put(`/templates/${id}`, data);
+    return handleResponse<CollageTemplate>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await api.delete(`/templates/${id}`);
     handleResponse<void>(response);
   }
 };

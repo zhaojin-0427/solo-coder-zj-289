@@ -4,6 +4,8 @@ import { collageApi, stickerApi, tagApi } from '../api/client';
 import type { Collage, Sticker, Tag } from '../types';
 import './Archive.css';
 
+type SourceFilter = 'all' | 'original' | 'template';
+
 export default function Archive() {
   const navigate = useNavigate();
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
@@ -14,11 +16,12 @@ export default function Archive() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [previewCollage, setPreviewCollage] = useState<Collage | null>(null);
 
   useEffect(() => {
     loadData();
-  }, [search, selectedTag]);
+  }, [search, selectedTag, sourceFilter]);
 
   useEffect(() => {
     stickerApi.getAll().then(setStickers).catch(() => {});
@@ -54,12 +57,6 @@ export default function Archive() {
       renderCollageToCanvas(canvas, collage, stickers, 0.3);
     });
   }
-
-  useEffect(() => {
-    if (stickers.length > 0 && collages.length > 0) {
-      renderThumbnails(collages);
-    }
-  }, [stickers]);
 
   function renderCollageToCanvas(canvas: HTMLCanvasElement, collage: Collage, stickerList: Sticker[], scale = 1) {
     const ctx = canvas.getContext('2d');
@@ -115,13 +112,27 @@ export default function Archive() {
   }
 
   const allTags = Array.from(new Set(collages.flatMap(c => c.tags)));
+  const templateCount = collages.filter(c => c.templateId).length;
+  const originalCount = collages.filter(c => !c.templateId).length;
+
+  const displayCollages = collages.filter(c => {
+    if (sourceFilter === 'template') return !!c.templateId;
+    if (sourceFilter === 'original') return !c.templateId;
+    return true;
+  });
+
+  useEffect(() => {
+    if (stickers.length > 0 && displayCollages.length > 0) {
+      renderThumbnails(displayCollages);
+    }
+  }, [stickers, displayCollages]);
 
   return (
     <div className="archive-page">
       <div className="page-header">
         <div>
           <h2 className="page-title">📁 作品归档</h2>
-          <p className="page-subtitle">珍藏你的每一份创意手账作品，共 {collages.length} 个作品</p>
+          <p className="page-subtitle">珍藏你的每一份创意手账作品，共 {collages.length} 个作品（原创 {originalCount} · 模板来源 {templateCount}）</p>
         </div>
         <button className="btn btn-primary btn-lg" onClick={() => navigate('/collage')}>
           <span>✨</span> 新建拼贴
@@ -135,6 +146,23 @@ export default function Archive() {
             <input type="text" className="form-input" placeholder="搜索标题或描述..."
               value={search}
               onChange={e => setSearch(e.target.value)} />
+          </div>
+          <div className="filter-item">
+            <label>作品来源</label>
+            <div className="source-filter-row">
+              <button className={`source-filter-btn ${sourceFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setSourceFilter('all')}>
+                📚 全部 ({collages.length})
+              </button>
+              <button className={`source-filter-btn ${sourceFilter === 'original' ? 'active' : ''}`}
+                onClick={() => setSourceFilter('original')}>
+                ✏️ 原创 ({originalCount})
+              </button>
+              <button className={`source-filter-btn ${sourceFilter === 'template' ? 'active' : ''}`}
+                onClick={() => setSourceFilter('template')}>
+                📋 模板来源 ({templateCount})
+              </button>
+            </div>
           </div>
           {allTags.length > 0 && (
             <div className="filter-item flex-3">
@@ -165,7 +193,7 @@ export default function Archive() {
           <div className="empty-state-icon">⏳</div>
           <div className="empty-state-title">加载中...</div>
         </div>
-      ) : collages.length === 0 ? (
+      ) : displayCollages.length === 0 ? (
         <div className="empty-state card">
           <div className="empty-state-icon">📭</div>
           <div className="empty-state-title">暂无作品</div>
@@ -176,13 +204,18 @@ export default function Archive() {
         </div>
       ) : (
         <div className="collage-grid">
-          {collages.map(collage => (
-            <div key={collage.id} className="collage-card">
+          {displayCollages.map(collage => (
+            <div key={collage.id} className={`collage-card ${collage.templateId ? 'template-derived' : ''}`}>
               <div className="collage-thumb-wrap" onClick={() => openPreview(collage)}>
                 <canvas
                   ref={el => { canvasRefs.current[collage.id] = el; }}
                   className="collage-canvas"
                 />
+                {collage.templateId && (
+                  <div className="template-badge" title={`基于模板「${collage.templateName}」创作`}>
+                    📋 模板
+                  </div>
+                )}
                 <div className="collage-overlay">
                   <span className="overlay-btn">🔍 预览</span>
                 </div>
@@ -192,11 +225,19 @@ export default function Archive() {
                   <h3 className="collage-title" title={collage.title}>{collage.title}</h3>
                   <span className="collage-count">{collage.elements.length}素材</span>
                 </div>
+                {collage.templateName && (
+                  <div className="collage-template-source">
+                    📋 来自模板：<span className="template-name">{collage.templateName}</span>
+                  </div>
+                )}
                 {collage.description && (
                   <p className="collage-desc">{collage.description}</p>
                 )}
                 <div className="collage-meta">
                   <span className="meta-date">📅 {new Date(collage.createdAt).toLocaleDateString('zh-CN')}</span>
+                  {collage.templateId && (
+                    <span className="meta-source">📋 模板衍生</span>
+                  )}
                 </div>
                 <div className="collage-actions">
                   <button className="btn btn-secondary btn-sm"
@@ -221,9 +262,19 @@ export default function Archive() {
           <div className="modal-content modal-xl">
             <div className="modal-header">
               <div>
-                <h3 className="modal-title">{previewCollage.title}</h3>
+                <h3 className="modal-title">
+                  {previewCollage.title}
+                  {previewCollage.templateId && (
+                    <span className="preview-template-badge" title={`基于模板「${previewCollage.templateName}」创作`}>
+                      📋 模板来源
+                    </span>
+                  )}
+                </h3>
                 <p className="modal-subtitle">
                   创建于 {new Date(previewCollage.createdAt).toLocaleDateString('zh-CN')} · {previewCollage.elements.length} 个素材
+                  {previewCollage.templateName && (
+                    <span className="preview-template-name"> · 来自模板：{previewCollage.templateName}</span>
+                  )}
                 </p>
               </div>
               <button className="modal-close" onClick={() => setPreviewCollage(null)}>×</button>

@@ -1,11 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Sticker, Tag, Collage } from '../types';
+import { Sticker, Tag, Collage, CollageTemplate, TemplateReplacementRecord } from '../types';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const STICKERS_FILE = path.join(DATA_DIR, 'stickers.json');
 const TAGS_FILE = path.join(DATA_DIR, 'tags.json');
 const COLLAGES_FILE = path.join(DATA_DIR, 'collages.json');
+const TEMPLATES_FILE = path.join(DATA_DIR, 'templates.json');
+const REPLACEMENTS_FILE = path.join(DATA_DIR, 'template_replacements.json');
 
 function ensureDataDir(): void {
   if (!fs.existsSync(DATA_DIR)) {
@@ -176,5 +178,73 @@ export const collageStore = {
       return true;
     }
     return false;
+  }
+};
+
+export const templateStore = {
+  getAll(): CollageTemplate[] {
+    return readJsonFile<CollageTemplate[]>(TEMPLATES_FILE, []);
+  },
+
+  getById(id: string): CollageTemplate | undefined {
+    return this.getAll().find(t => t.id === id);
+  },
+
+  create(template: CollageTemplate): CollageTemplate {
+    const templates = this.getAll();
+    templates.push(template);
+    writeJsonFile(TEMPLATES_FILE, templates);
+    return template;
+  },
+
+  update(id: string, updates: Partial<CollageTemplate>): CollageTemplate | undefined {
+    const templates = this.getAll();
+    const index = templates.findIndex(t => t.id === id);
+    if (index !== -1) {
+      templates[index] = { ...templates[index], ...updates, updatedAt: new Date().toISOString() };
+      writeJsonFile(TEMPLATES_FILE, templates);
+      return templates[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const templates = this.getAll();
+    const filtered = templates.filter(t => t.id !== id);
+    if (filtered.length !== templates.length) {
+      writeJsonFile(TEMPLATES_FILE, filtered);
+      return true;
+    }
+    return false;
+  },
+
+  incrementUsage(id: string): void {
+    const templates = this.getAll();
+    const template = templates.find(t => t.id === id);
+    if (template) {
+      template.usageCount += 1;
+      template.updatedAt = new Date().toISOString();
+      writeJsonFile(TEMPLATES_FILE, templates);
+    }
+  }
+};
+
+export const replacementStore = {
+  getAll(): TemplateReplacementRecord[] {
+    return readJsonFile<TemplateReplacementRecord[]>(REPLACEMENTS_FILE, []);
+  },
+
+  create(record: TemplateReplacementRecord): TemplateReplacementRecord {
+    const records = this.getAll();
+    records.push(record);
+    writeJsonFile(REPLACEMENTS_FILE, records);
+    return record;
+  },
+
+  createBatch(records: TemplateReplacementRecord[]): TemplateReplacementRecord[] {
+    const all = this.getAll();
+    all.push(...records);
+    writeJsonFile(REPLACEMENTS_FILE, all);
+    return records;
   }
 };

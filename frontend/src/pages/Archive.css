@@ -268,3 +268,123 @@
   border: 1px solid;
   line-height: 1.4;
 }
+
+.source-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.source-filter-btn {
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.source-filter-btn:hover {
+  background: var(--bg-hover);
+}
+
+.source-filter-btn.active {
+  background: linear-gradient(135deg, #6EC6FF, #A855F7);
+  color: #fff;
+  border-color: transparent;
+}
+
+.template-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #A855F7, #6EC6FF);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  z-index: 2;
+}
+
+.collage-card.template-derived {
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.collage-card.template-derived:hover {
+  border-color: #A855F7;
+}
+
+.collage-template-source {
+  font-size: 11px;
+  color: #A855F7;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.collage-template-source .template-name {
+  font-weight: 600;
+  background: rgba(168, 85, 247, 0.1);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.collage-meta {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-source {
+  font-size: 11px;
+  color: #A855F7;
+  background: rgba(168, 85, 247, 0.1);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.preview-template-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  background: linear-gradient(135deg, #A855F7, #6EC6FF);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.preview-template-name {
+  color: #A855F7;
+  font-weight: 500;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-item > label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.filter-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
