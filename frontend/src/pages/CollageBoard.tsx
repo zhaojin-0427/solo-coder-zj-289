@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { stickerApi, collageApi, statisticsApi, tagApi, templateApi } from '../api/client';
+import { stickerApi, collageApi, statisticsApi, tagApi, templateApi, planApi } from '../api/client';
 import type {
   Sticker,
   Collage,
@@ -12,7 +12,8 @@ import type {
   TemplateApplyMode,
   TemplateApplyResult,
   ReplacementInfo,
-  ColorFamily
+  ColorFamily,
+  Plan
 } from '../types';
 import { CategoryLabels, HarmonyTypeLabels, ColorFamilyLabels } from '../types';
 import './CollageBoard.css';
@@ -69,7 +70,10 @@ export default function CollageBoard() {
   const [canvasWidth, setCanvasWidth] = useState(600);
   const [canvasHeight, setCanvasHeight] = useState(840);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
-  const [saveForm, setSaveForm] = useState({ title: '', description: '', collageTags: [] as string[] });
+  const [saveForm, setSaveForm] = useState({ title: '', description: '', collageTags: [] as string[], planId: '' as string });
+
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
   const [panelDragging, setPanelDragging] = useState<string | null>(null);
@@ -110,7 +114,21 @@ export default function CollageBoard() {
     tagApi.getAll().then(setTags).catch(() => {});
     templateApi.getThemes().then(setTemplateThemes).catch(() => {});
     templateApi.getSizes().then(setTemplateSizes).catch(() => {});
+    loadPlans();
   }, []);
+
+  async function loadPlans() {
+    setLoadingPlans(true);
+    try {
+      const data = await planApi.getAll({ status: 'pending' });
+      setPlans(data);
+    } catch {
+      const allPlans = await planApi.getAll();
+      setPlans(allPlans.filter(p => p.status === 'pending' || p.status === 'in_progress'));
+    } finally {
+      setLoadingPlans(false);
+    }
+  }
 
   useEffect(() => {
     if (leftTab === 'templates') {
@@ -147,7 +165,7 @@ export default function CollageBoard() {
         setCanvasWidth(collage.canvasWidth);
         setCanvasHeight(collage.canvasHeight);
         setBackgroundColor(collage.backgroundColor);
-        setSaveForm({ title: collage.title, description: collage.description, collageTags: collage.tags });
+        setSaveForm({ title: collage.title, description: collage.description, collageTags: collage.tags, planId: '' });
         setAppliedTemplateId(collage.templateId);
         setAppliedTemplateName(collage.templateName);
         if (collage.elements.length > 0) {
@@ -348,7 +366,7 @@ export default function CollageBoard() {
       return;
     }
     try {
-      const data: Partial<Collage> = {
+      const data: Partial<Collage> & { planId?: string } = {
         ...saveForm,
         tags: saveForm.collageTags,
         elements,
@@ -362,12 +380,15 @@ export default function CollageBoard() {
       if (appliedTemplateName) {
         data.templateName = appliedTemplateName;
       }
+      if (saveForm.planId) {
+        data.planId = saveForm.planId;
+      }
       if (id) {
         await collageApi.update(id, data);
       } else {
         await collageApi.create(data);
       }
-      alert('保存成功！');
+      alert('保存成功！' + (saveForm.planId ? ' 已绑定到创作计划' : ''));
       setShowSaveModal(false);
       navigate('/archive');
     } catch (err) {
@@ -1026,6 +1047,27 @@ export default function CollageBoard() {
                     </span>
                   ))}
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">绑定创作计划（可选）</label>
+                <select
+                  className="form-input"
+                  value={saveForm.planId}
+                  onChange={e => setSaveForm(p => ({ ...p, planId: e.target.value }))}
+                  disabled={loadingPlans}
+                >
+                  <option value="">不绑定计划</option>
+                  {plans.filter(p => p.status === 'pending' || p.status === 'in_progress').map(plan => (
+                    <option key={plan.id} value={plan.id}>
+                      📅 {plan.date} - {plan.title}
+                    </option>
+                  ))}
+                </select>
+                {saveForm.planId && (
+                  <div className="plan-bind-hint">
+                    💡 保存后系统将自动标记该计划为完成，并记录实际使用的素材
+                  </div>
+                )}
               </div>
               {appliedTemplateName && (
                 <div className="form-group">

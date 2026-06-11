@@ -6,6 +6,7 @@ import tagsRouter from './routes/tags';
 import collagesRouter from './routes/collages';
 import statisticsRouter from './routes/statistics';
 import templatesRouter from './routes/templates';
+import plansRouter from './routes/plans';
 
 const app = express();
 const PORT = 9602;
@@ -25,6 +26,7 @@ app.use('/api/tags', tagsRouter);
 app.use('/api/collages', collagesRouter);
 app.use('/api/statistics', statisticsRouter);
 app.use('/api/templates', templatesRouter);
+app.use('/api/plans', plansRouter);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('服务器错误:', err);

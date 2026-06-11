@@ -829,6 +829,94 @@
   color: var(--text-muted);
 }
 
+.theme-trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.theme-trend-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.theme-trend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.theme-trend-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-trend-stats {
+  font-size: 12px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.stat-complete {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.stat-total {
+  color: var(--text-secondary);
+}
+
+.stat-rate {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.theme-trend-bars {
+  width: 100%;
+}
+
+.theme-trend-track {
+  height: 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.theme-trend-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.theme-trend-fill.completed {
+  background: linear-gradient(90deg, #6BCB77, #4CAF50);
+  border-radius: 6px;
+}
+
+.theme-trend-fill.pending {
+  background: linear-gradient(90deg, #FFD93D, #FFC107);
+  border-radius: 6px;
+}
+
+.theme-trend-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+.theme-trend-legend .legend-item {
+  background: transparent;
+  padding: 0;
+}
+
 @media (max-width: 1100px) {
   .stats-overview {
     grid-template-columns: repeat(2, 1fr);

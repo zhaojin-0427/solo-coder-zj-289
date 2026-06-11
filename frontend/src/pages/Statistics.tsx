@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { statisticsApi } from '../api/client';
-import type { Statistics, ColorFamily, StickerCategory, StickerSource } from '../types';
+import { statisticsApi, planApi } from '../api/client';
+import type { Statistics, ColorFamily, StickerCategory, StickerSource, PlanStatistics } from '../types';
 import { ColorFamilyLabels, CategoryLabels, SourceLabels } from '../types';
 import './Statistics.css';
 
@@ -22,6 +22,7 @@ const ColorFamilyColors: Record<ColorFamily, string> = {
 export default function Statistics() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Statistics | null>(null);
+  const [planStats, setPlanStats] = useState<PlanStatistics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +32,13 @@ export default function Statistics() {
   async function loadStats() {
     setLoading(true);
     try {
+      const [data, planData] = await Promise.all([
+        statisticsApi.getStatistics(),
+        planApi.getStatistics()
+      ]);
+      setStats(data);
+      setPlanStats(planData);
+    } catch {
       const data = await statisticsApi.getStatistics();
       setStats(data);
     } finally {
@@ -110,6 +118,45 @@ export default function Statistics() {
             <div className="stat-label">模板复用率</div>
           </div>
         </div>
+        {planStats && (
+          <>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF6B9D 0%, #FF9A76 100%)', color: '#fff' }}>
+              <div className="stat-icon">✅</div>
+              <div className="stat-content">
+                <div className="stat-value">{planStats.completionRate || 0}%</div>
+                <div className="stat-label">计划完成率</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FFD93D 0%, #6BCB77 100%)', color: '#fff' }}>
+              <div className="stat-icon">🔥</div>
+              <div className="stat-content">
+                <div className="stat-value">{planStats.consecutiveDays || 0}</div>
+                <div className="stat-label">连续创作天数</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #FF6B6B 0%, #FF9A76 100%)', color: '#fff' }}>
+              <div className="stat-icon">⚠️</div>
+              <div className="stat-content">
+                <div className="stat-value">{planStats.overdueCount || 0}</div>
+                <div className="stat-label">逾期计划数</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #4D96FF 0%, #A855F7 100%)', color: '#fff' }}>
+              <div className="stat-icon">🔄</div>
+              <div className="stat-content">
+                <div className="stat-value">{planStats.materialReuseRate || 0}%</div>
+                <div className="stat-label">计划带动素材复用率</div>
+              </div>
+            </div>
+            <div className="stat-card" style={{ background: 'linear-gradient(135deg, #A855F7 0%, #6EC6FF 100%)', color: '#fff' }}>
+              <div className="stat-icon">📅</div>
+              <div className="stat-content">
+                <div className="stat-value">{planStats.totalPlans || 0}</div>
+                <div className="stat-label">计划总数</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="stats-grid">
@@ -409,6 +456,59 @@ export default function Statistics() {
             </div>
           )}
         </div>
+
+        {planStats && planStats.themeCompletionTrend && planStats.themeCompletionTrend.length > 0 && (
+          <div className="stats-section card card-wide">
+            <div className="section-header">
+              <h3 className="section-title">📊 各主题计划完成趋势</h3>
+              <span className="section-badge">{planStats.themeCompletionTrend.length} 个主题</span>
+            </div>
+            <div className="theme-trend-chart">
+              {(() => {
+                const maxTotal = Math.max(...planStats.themeCompletionTrend.map(t => t.total || 0), 1);
+                return planStats.themeCompletionTrend.map((item, idx) => (
+                  <div key={item.theme} className="theme-trend-item">
+                    <div className="theme-trend-header">
+                      <span className="theme-trend-name">{item.theme}</span>
+                      <span className="theme-trend-stats">
+                        <span className="stat-complete">✓ {item.completed || 0}</span>
+                        <span className="stat-total">/ {item.total || 0}</span>
+                        <span className="stat-rate">({item.total ? Math.round((item.completed || 0) / item.total * 100) : 0}%)</span>
+                      </span>
+                    </div>
+                    <div className="theme-trend-bars">
+                      <div className="theme-trend-track">
+                        <div 
+                          className="theme-trend-fill completed" 
+                          style={{ width: `${((item.completed || 0) / maxTotal) * 100}%` }}
+                          title={`已完成: ${item.completed || 0}`}
+                        />
+                        <div 
+                          className="theme-trend-fill pending" 
+                          style={{ 
+                            width: `${(((item.total || 0) - (item.completed || 0)) / maxTotal) * 100}%`,
+                            marginLeft: `${((item.completed || 0) / maxTotal) * 100}%`
+                          }}
+                          title={`待完成: ${(item.total || 0) - (item.completed || 0)}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+            <div className="theme-trend-legend">
+              <div className="legend-item">
+                <span className="legend-dot" style={{ backgroundColor: '#6BCB77' }} />
+                <span className="legend-label">已完成</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ backgroundColor: '#FFD93D' }} />
+                <span className="legend-label">待完成</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="stats-section card card-wide">
           <div className="section-header">

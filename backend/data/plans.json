@@ -1,0 +1,22 @@
+[
+  {
+    "id": "f3521856-5ff9-434b-930b-420e7f870dc8",
+    "title": "夏日旅行手账",
+    "description": "记录暑假旅行的美好时光",
+    "date": "2025-07-15",
+    "themes": [
+      "旅行"
+    ],
+    "colorFamilies": [
+      "yellow",
+      "green",
+      "blue"
+    ],
+    "plannedStickerIds": [],
+    "referenceTagIds": [],
+    "estimatedDuration": 60,
+    "status": "overdue",
+    "createdAt": "2026-06-11T04:50:30.094Z",
+    "updatedAt": "2026-06-11T04:50:30.094Z"
+  }
+]

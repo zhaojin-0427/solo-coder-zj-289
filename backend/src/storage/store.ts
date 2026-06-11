@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Sticker, Tag, Collage, CollageTemplate, TemplateReplacementRecord } from '../types';
+import { Sticker, Tag, Collage, CollageTemplate, TemplateReplacementRecord, Plan } from '../types';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const STICKERS_FILE = path.join(DATA_DIR, 'stickers.json');
@@ -8,6 +8,7 @@ const TAGS_FILE = path.join(DATA_DIR, 'tags.json');
 const COLLAGES_FILE = path.join(DATA_DIR, 'collages.json');
 const TEMPLATES_FILE = path.join(DATA_DIR, 'templates.json');
 const REPLACEMENTS_FILE = path.join(DATA_DIR, 'template_replacements.json');
+const PLANS_FILE = path.join(DATA_DIR, 'plans.json');
 
 function ensureDataDir(): void {
   if (!fs.existsSync(DATA_DIR)) {
@@ -246,5 +247,55 @@ export const replacementStore = {
     all.push(...records);
     writeJsonFile(REPLACEMENTS_FILE, all);
     return records;
+  }
+};
+
+export const planStore = {
+  getAll(): Plan[] {
+    return readJsonFile<Plan[]>(PLANS_FILE, []);
+  },
+
+  getById(id: string): Plan | undefined {
+    return this.getAll().find(p => p.id === id);
+  },
+
+  getByDateRange(startDate: string, endDate: string): Plan[] {
+    return this.getAll().filter(p => p.date >= startDate && p.date <= endDate);
+  },
+
+  getByStatus(status: string): Plan[] {
+    return this.getAll().filter(p => p.status === status);
+  },
+
+  create(plan: Plan): Plan {
+    const plans = this.getAll();
+    plans.push(plan);
+    writeJsonFile(PLANS_FILE, plans);
+    return plan;
+  },
+
+  update(id: string, updates: Partial<Plan>): Plan | undefined {
+    const plans = this.getAll();
+    const index = plans.findIndex(p => p.id === id);
+    if (index !== -1) {
+      plans[index] = { ...plans[index], ...updates, updatedAt: new Date().toISOString() };
+      writeJsonFile(PLANS_FILE, plans);
+      return plans[index];
+    }
+    return undefined;
+  },
+
+  delete(id: string): boolean {
+    const plans = this.getAll();
+    const filtered = plans.filter(p => p.id !== id);
+    if (filtered.length !== plans.length) {
+      writeJsonFile(PLANS_FILE, filtered);
+      return true;
+    }
+    return false;
+  },
+
+  getByCollageId(collageId: string): Plan | undefined {
+    return this.getAll().find(p => p.collageId === collageId);
   }
 };

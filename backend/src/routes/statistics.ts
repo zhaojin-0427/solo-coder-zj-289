@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { stickerStore, tagStore, collageStore, templateStore, replacementStore } from '../storage/store';
-import { ColorFamily, Statistics, StickerCategory, StickerSource } from '../types';
+import { stickerStore, tagStore, collageStore, templateStore, replacementStore, planStore } from '../storage/store';
+import { ColorFamily, Statistics, StickerCategory, StickerSource, Plan } from '../types';
 import { getColorHarmonySuggestions } from '../utils/colorUtils';
 
 const router = Router();
@@ -121,6 +121,97 @@ router.get('/', (req: Request, res: Response) => {
       .slice(0, 5)
       .map(t => ({ templateId: t.id, name: t.name, usageCount: t.usageCount }));
 
+    const plans = planStore.getAll();
+    const today = now.toISOString().split('T')[0];
+    
+    const plansToUpdate = plans.filter(p => 
+      (p.status === 'pending' || p.status === 'in_progress') && p.date < today
+    );
+    for (const p of plansToUpdate) {
+      p.status = 'overdue';
+    }
+
+    const totalPlans = plans.length;
+    const completedPlans = plans.filter(p => p.status === 'completed').length;
+    const overdueCount = plans.filter(p => p.status === 'overdue').length;
+    const completionRate = totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0;
+
+    const completedDates = plans
+      .filter(p => p.status === 'completed' && p.completedAt)
+      .map(p => new Date(p.completedAt!).toISOString().split('T')[0])
+      .sort();
+
+    let consecutiveDays = 0;
+    if (completedDates.length > 0) {
+      let currentStreak = 0;
+      let checkDate = new Date(today);
+      
+      for (let i = 0; i < 365; i++) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (completedDates.includes(dateStr)) {
+          currentStreak++;
+          consecutiveDays = Math.max(consecutiveDays, currentStreak);
+        } else if (i > 0) {
+          currentStreak = 0;
+        }
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+    }
+
+    const themeMap: Record<string, { total: number; completed: number }> = {};
+    for (const plan of plans) {
+      for (const theme of plan.themes) {
+        if (!themeMap[theme]) {
+          themeMap[theme] = { total: 0, completed: 0 };
+        }
+        themeMap[theme].total++;
+        if (plan.status === 'completed') {
+          themeMap[theme].completed++;
+        }
+      }
+    }
+    const themeCompletionTrend = Object.entries(themeMap)
+      .map(([theme, stats]) => ({ theme, ...stats }))
+      .sort((a, b) => b.total - a.total);
+
+    const plannedStickerSet = new Set<string>();
+    const reusedStickerSet = new Set<string>();
+    for (const plan of plans) {
+      for (const id of plan.plannedStickerIds) {
+        plannedStickerSet.add(id);
+      }
+      if (plan.actualStickerIds) {
+        for (const id of plan.actualStickerIds) {
+          if (plan.plannedStickerIds.includes(id)) {
+            reusedStickerSet.add(id);
+          }
+        }
+      }
+    }
+    const materialReuseRate = plannedStickerSet.size > 0 
+      ? Math.round((reusedStickerSet.size / plannedStickerSet.size) * 100) 
+      : 0;
+
+    const weekMap: Record<string, { total: number; completed: number }> = {};
+    for (const plan of plans) {
+      const date = new Date(plan.date);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      if (!weekMap[weekKey]) {
+        weekMap[weekKey] = { total: 0, completed: 0 };
+      }
+      weekMap[weekKey].total++;
+      if (plan.status === 'completed') {
+        weekMap[weekKey].completed++;
+      }
+    }
+    const weeklyTrend = Object.entries(weekMap)
+      .map(([week, stats]) => ({ week, ...stats }))
+      .sort((a, b) => a.week.localeCompare(b.week))
+      .slice(-12);
+
     const stats: Statistics = {
       totalStickers: stickers.length,
       totalCollages: collages.length,
@@ -135,7 +226,17 @@ router.get('/', (req: Request, res: Response) => {
       templateConversionTrend,
       mostReplacedCategories,
       templateReuseRate,
-      topTemplates
+      topTemplates,
+      planStats: {
+        totalPlans,
+        completedPlans,
+        completionRate,
+        consecutiveDays,
+        overdueCount,
+        themeCompletionTrend,
+        materialReuseRate,
+        weeklyTrend
+      }
     };
 
     res.json({ success: true, data: stats });

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { collageStore, stickerStore, tagStore } from '../storage/store';
+import { collageStore, stickerStore, tagStore, planStore } from '../storage/store';
 import { Collage } from '../types';
 
 const router = Router();
@@ -41,7 +41,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
 router.post('/', (req: Request, res: Response) => {
   try {
-    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName } = req.body;
+    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName, planId } = req.body;
 
     if (!title || !elements) {
       return res.status(400).json({ success: false, error: '缺少必填字段' });
@@ -73,6 +73,16 @@ router.post('/', (req: Request, res: Response) => {
       tagStore.incrementUsage(tags);
     }
 
+    if (planId) {
+      const actualStickerIds = [...new Set(elements.map((e: { stickerId: string }) => e.stickerId))] as string[];
+      planStore.update(planId, {
+        collageId: created.id,
+        actualStickerIds,
+        status: 'completed',
+        completedAt: new Date().toISOString()
+      });
+    }
+
     res.status(201).json({ success: true, data: created });
   } catch (error) {
     console.error('创建作品错误:', error);
@@ -82,7 +92,7 @@ router.post('/', (req: Request, res: Response) => {
 
 router.put('/:id', (req: Request, res: Response) => {
   try {
-    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName } = req.body;
+    const { title, description, elements, backgroundColor, canvasWidth, canvasHeight, tags, templateId, templateName, planId } = req.body;
     const updates: Partial<Collage> = {};
 
     if (title !== undefined) updates.title = title;
@@ -99,6 +109,17 @@ router.put('/:id', (req: Request, res: Response) => {
     if (!updated) {
       return res.status(404).json({ success: false, error: '作品不存在' });
     }
+
+    if (planId && elements) {
+      const actualStickerIds = [...new Set(elements.map((e: { stickerId: string }) => e.stickerId))] as string[];
+      planStore.update(planId, {
+        collageId: updated.id,
+        actualStickerIds,
+        status: 'completed',
+        completedAt: new Date().toISOString()
+      });
+    }
+
     res.json({ success: true, data: updated });
   } catch (error) {
     res.status(500).json({ success: false, error: '更新作品失败' });

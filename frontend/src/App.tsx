@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import StickerLibrary from './pages/StickerLibrary';
 import TagManager from './pages/TagManager';
+import Calendar from './pages/Calendar';
 import CollageBoard from './pages/CollageBoard';
 import Archive from './pages/Archive';
 import Statistics from './pages/Statistics';
@@ -13,6 +14,7 @@ function App() {
         <Route index element={<Navigate to="/stickers" replace />} />
         <Route path="stickers" element={<StickerLibrary />} />
         <Route path="tags" element={<TagManager />} />
+        <Route path="calendar" element={<Calendar />} />
         <Route path="collage" element={<CollageBoard />} />
         <Route path="collage/:id" element={<CollageBoard />} />
         <Route path="archive" element={<Archive />} />

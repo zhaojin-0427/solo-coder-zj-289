@@ -128,6 +128,37 @@ export interface ColorHarmonySuggestion {
   }[];
 }
 
+export type PlanStatus = 'pending' | 'in_progress' | 'completed' | 'overdue';
+
+export interface Plan {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  themes: string[];
+  colorFamilies: ColorFamily[];
+  plannedStickerIds: string[];
+  referenceTagIds: string[];
+  estimatedDuration: number;
+  status: PlanStatus;
+  collageId?: string;
+  actualStickerIds?: string[];
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlanStatistics {
+  totalPlans: number;
+  completedPlans: number;
+  completionRate: number;
+  consecutiveDays: number;
+  overdueCount: number;
+  themeCompletionTrend: { theme: string; total: number; completed: number }[];
+  materialReuseRate: number;
+  weeklyTrend: { week: string; total: number; completed: number }[];
+}
+
 export interface Statistics {
   totalStickers: number;
   totalCollages: number;
@@ -143,4 +174,5 @@ export interface Statistics {
   mostReplacedCategories: { category: StickerCategory; count: number }[];
   templateReuseRate: number;
   topTemplates: { templateId: string; name: string; usageCount: number }[];
+  planStats?: PlanStatistics;
 }

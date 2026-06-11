@@ -1103,3 +1103,19 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
 }
+
+.plan-bind-hint {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fff5f8 0%, #fff0f3 100%);
+  border-left: 3px solid #ff6b9d;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #c94c7d;
+  line-height: 1.5;
+}
+
+.plan-bind-hint::before {
+  content: '💡';
+  margin-right: 6px;
+}

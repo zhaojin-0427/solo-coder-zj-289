@@ -9,7 +9,11 @@ import type {
   ColorHarmonyResult,
   ApiResponse,
   TemplateApplyMode,
-  TemplateApplyResult
+  TemplateApplyResult,
+  Plan,
+  PlanStatistics,
+  PlanStatus,
+  ColorFamily
 } from '../types';
 
 const api: AxiosInstance = axios.create({
@@ -180,6 +184,68 @@ export const statisticsApi = {
   async getColorHarmony(color: string): Promise<ColorHarmonyResult> {
     const response = await api.get('/statistics/color-harmony', { params: { color } });
     return handleResponse<ColorHarmonyResult>(response);
+  }
+};
+
+export const planApi = {
+  async getAll(params?: {
+    startDate?: string;
+    endDate?: string;
+    status?: PlanStatus;
+    theme?: string;
+    colorFamily?: ColorFamily;
+  }): Promise<Plan[]> {
+    const response = await api.get('/plans', { params });
+    return handleResponse<Plan[]>(response);
+  },
+
+  async getById(id: string): Promise<Plan> {
+    const response = await api.get(`/plans/${id}`);
+    return handleResponse<Plan>(response);
+  },
+
+  async create(data: {
+    title: string;
+    description?: string;
+    date: string;
+    themes?: string[];
+    colorFamilies?: ColorFamily[];
+    plannedStickerIds?: string[];
+    referenceTagIds?: string[];
+    estimatedDuration?: number;
+  }): Promise<Plan> {
+    const response = await api.post('/plans', data);
+    return handleResponse<Plan>(response);
+  },
+
+  async update(id: string, data: Partial<Plan>): Promise<Plan> {
+    const response = await api.put(`/plans/${id}`, data);
+    return handleResponse<Plan>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await api.delete(`/plans/${id}`);
+    handleResponse<void>(response);
+  },
+
+  async getRecommendations(id: string): Promise<Sticker[]> {
+    const response = await api.get(`/plans/${id}/recommendations`);
+    return handleResponse<Sticker[]>(response);
+  },
+
+  async bindCollage(id: string, collageId: string): Promise<Plan> {
+    const response = await api.post(`/plans/${id}/bind-collage`, { collageId });
+    return handleResponse<Plan>(response);
+  },
+
+  async getStatistics(): Promise<PlanStatistics> {
+    const response = await api.get('/plans/statistics/summary');
+    return handleResponse<PlanStatistics>(response);
+  },
+
+  async getAvailableThemes(): Promise<string[]> {
+    const response = await api.get('/plans/themes/available');
+    return handleResponse<string[]>(response);
   }
 };
 
