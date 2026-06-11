@@ -125,17 +125,28 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.15s;
   display: flex;
   flex-direction: column;
   border: 2px solid transparent;
+  user-select: none;
+  -webkit-user-drag: element;
 }
 
 .mini-sticker:hover {
   transform: scale(1.05);
   border-color: var(--primary-color);
   box-shadow: var(--shadow-sm);
+}
+
+.mini-sticker:active {
+  cursor: grabbing;
+}
+
+.mini-sticker.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
 }
 
 .mini-sticker img {
@@ -356,6 +367,12 @@
     linear-gradient(rgba(200,200,200,0.2) 1px, transparent 1px),
     linear-gradient(90deg, rgba(200,200,200,0.2) 1px, transparent 1px);
   background-size: 20px 20px;
+  transition: all 0.2s ease;
+}
+
+.canvas.drag-over {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 4px var(--primary-color), 0 0 40px rgba(255,107,157,0.4);
+  background-color: rgba(255, 107, 157, 0.04) !important;
 }
 
 .canvas-element {

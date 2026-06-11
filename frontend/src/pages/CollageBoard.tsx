@@ -42,6 +42,7 @@ export default function CollageBoard() {
   const [saveForm, setSaveForm] = useState({ title: '', description: '', collageTags: [] as string[] });
 
   const [isDragging, setIsDragging] = useState(false);
+  const [panelDragging, setPanelDragging] = useState<string | null>(null);
   const dragStartRef = useRef<{ x: number; y: number; elem: CollageElement | null } | null>(null);
   const nextZIndex = useRef(10);
 
@@ -90,22 +91,65 @@ export default function CollageBoard() {
     return true;
   });
 
-  function addStickerToCanvas(sticker: Sticker) {
+  function addStickerToCanvas(sticker: Sticker, posX?: number, posY?: number) {
     const scale = 0.6;
     const baseW = Math.min(160, sticker.width || 160);
     const baseH = Math.min(160, sticker.height || 160);
+    const w = baseW * scale;
+    const h = baseH * scale;
+    let x: number, y: number;
+    if (posX !== undefined && posY !== undefined) {
+      x = Math.max(0, Math.min(canvasWidth - w, posX - w / 2));
+      y = Math.max(0, Math.min(canvasHeight - h, posY - h / 2));
+    } else {
+      x = (canvasWidth - w) / 2 + (Math.random() - 0.5) * 50;
+      y = (canvasHeight - h) / 2 + (Math.random() - 0.5) * 50;
+    }
     const newElement: CollageElement = {
       id: 'elem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       stickerId: sticker.id,
-      x: (canvasWidth - baseW * scale) / 2 + (Math.random() - 0.5) * 50,
-      y: (canvasHeight - baseH * scale) / 2 + (Math.random() - 0.5) * 50,
-      width: baseW * scale,
-      height: baseH * scale,
+      x,
+      y,
+      width: w,
+      height: h,
       rotation: (Math.random() - 0.5) * 10,
       zIndex: nextZIndex.current++
     };
     setElements(prev => [...prev, newElement]);
     setSelectedId(newElement.id);
+  }
+
+  function handlePanelDragStart(e: React.DragEvent, stickerId: string) {
+    setPanelDragging(stickerId);
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/sticker-id', stickerId);
+  }
+
+  function handlePanelDragEnd() {
+    setPanelDragging(null);
+  }
+
+  function handleCanvasDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleCanvasDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const stickerId = e.dataTransfer.getData('text/sticker-id');
+    if (!stickerId || !canvasRef.current) return;
+
+    const sticker = stickers.find(s => s.id === stickerId);
+    if (!sticker) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasWidth / rect.width;
+    const scaleY = canvasHeight / rect.height;
+    const posX = (e.clientX - rect.left) * scaleX;
+    const posY = (e.clientY - rect.top) * scaleY;
+
+    addStickerToCanvas(sticker, posX, posY);
+    setPanelDragging(null);
   }
 
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent, elem: CollageElement) => {
@@ -286,11 +330,14 @@ export default function CollageBoard() {
             ) : (
               <div className="mini-sticker-grid">
                 {filteredStickers.map(s => (
-                  <div key={s.id} className="mini-sticker"
-                    title={`${s.name} - ${CategoryLabels[s.category]}`}
-                    onClick={() => addStickerToCanvas(s)}>
+                  <div key={s.id} className={`mini-sticker ${panelDragging === s.id ? 'dragging' : ''}`}
+                    draggable={true}
+                    title={`${s.name} - ${CategoryLabels[s.category]}（点击或拖拽到画布）`}
+                    onClick={() => addStickerToCanvas(s)}
+                    onDragStart={(e) => handlePanelDragStart(e, s.id)}
+                    onDragEnd={handlePanelDragEnd}>
                     {s.imageData ? (
-                      <img src={s.imageData} alt={s.name} />
+                      <img src={s.imageData} alt={s.name} draggable={false} />
                     ) : (
                       <div className="mini-placeholder">🖼️</div>
                     )}
@@ -374,9 +421,11 @@ export default function CollageBoard() {
           <div className="canvas-container">
             <div
               ref={canvasRef}
-              className="canvas"
+              className={`canvas ${panelDragging ? 'drag-over' : ''}`}
               style={{ width: canvasWidth, height: canvasHeight, backgroundColor }}
               onClick={() => setSelectedId(null)}
+              onDragOver={handleCanvasDragOver}
+              onDrop={handleCanvasDrop}
             >
               {elements.map(elem => {
                 const sticker = stickers.find(s => s.id === elem.stickerId);
@@ -405,7 +454,7 @@ export default function CollageBoard() {
               {elements.length === 0 && (
                 <div className="canvas-empty">
                   <div className="canvas-empty-icon">✨</div>
-                  <p>从左侧素材面板点击素材添加到画布</p>
+                  <p>从左侧素材面板<strong>拖拽</strong>或<strong>点击</strong>素材添加到画布</p>
                   <p className="canvas-empty-sub">拖拽移动 · 自由旋转 · 创意拼贴</p>
                 </div>
               )}

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "33ba69dc-2681-4aed-a41c-666395f81d44",
+    "title": "测试作品",
+    "description": "验证归档标签显示",
+    "elements": [
+      {
+        "id": "e1",
+        "stickerId": "129e9f48-f877-47ce-9479-169744cb4a71",
+        "x": 10,
+        "y": 10,
+        "width": 80,
+        "height": 80,
+        "rotation": 0,
+        "zIndex": 1
+      }
+    ],
+    "backgroundColor": "#FFFFFF",
+    "canvasWidth": 600,
+    "canvasHeight": 840,
+    "tags": [
+      "84113db6-4609-490b-94bb-cee2f68f6210"
+    ],
+    "createdAt": "2026-06-11T00:48:23.603Z",
+    "updatedAt": "2026-06-11T00:48:23.603Z"
+  }
+]

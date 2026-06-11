@@ -1,0 +1,16 @@
+[
+  {
+    "id": "84113db6-4609-490b-94bb-cee2f68f6210",
+    "name": "旅行",
+    "color": "#4D96FF",
+    "createdAt": "2026-06-11T00:47:57.203Z",
+    "usageCount": 1
+  },
+  {
+    "id": "fc401ae9-0413-4880-bdec-b01823c69a73",
+    "name": "春日",
+    "color": "#6BCB77",
+    "createdAt": "2026-06-11T00:47:57.206Z",
+    "usageCount": 0
+  }
+]

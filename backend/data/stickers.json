@@ -1,0 +1,28 @@
+[
+  {
+    "id": "129e9f48-f877-47ce-9479-169744cb4a71",
+    "name": "测试贴纸",
+    "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+    "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+    "category": "decoration",
+    "source": "purchased",
+    "themes": [
+      "旅行"
+    ],
+    "tagIds": [
+      "84113db6-4609-490b-94bb-cee2f68f6210"
+    ],
+    "primaryColors": [
+      "#78da63",
+      "#fcff1f",
+      "#000303",
+      "#0200ef"
+    ],
+    "colorFamily": "green",
+    "width": 200,
+    "height": 200,
+    "createdAt": "2026-06-11T00:48:14.517Z",
+    "usageCount": 1,
+    "lastUsedAt": "2026-06-11T00:48:23.604Z"
+  }
+]

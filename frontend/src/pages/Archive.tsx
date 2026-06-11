@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collageApi, stickerApi } from '../api/client';
-import type { Collage, Sticker } from '../types';
+import { collageApi, stickerApi, tagApi } from '../api/client';
+import type { Collage, Sticker, Tag } from '../types';
 import './Archive.css';
 
 export default function Archive() {
@@ -10,6 +10,7 @@ export default function Archive() {
 
   const [collages, setCollages] = useState<Collage[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
@@ -21,7 +22,16 @@ export default function Archive() {
 
   useEffect(() => {
     stickerApi.getAll().then(setStickers).catch(() => {});
+    tagApi.getAll().then(setTags).catch(() => {});
   }, []);
+
+  function getTagName(tagId: string): string {
+    return tags.find(t => t.id === tagId)?.name || tagId;
+  }
+
+  function getTagColor(tagId: string): string {
+    return tags.find(t => t.id === tagId)?.color || '#999';
+  }
 
   async function loadData() {
     setLoading(true);
@@ -132,13 +142,18 @@ export default function Archive() {
               <div className="tag-filter-row">
                 <button className={`tag-filter-btn ${!selectedTag ? 'active' : ''}`}
                   onClick={() => setSelectedTag('')}>全部</button>
-                {allTags.map(tagId => (
-                  <button key={tagId}
-                    className={`tag-filter-btn ${selectedTag === tagId ? 'active' : ''}`}
-                    onClick={() => setSelectedTag(tagId === selectedTag ? '' : tagId)}>
-                    🏷️ {tagId}
-                  </button>
-                ))}
+                {allTags.map(tagId => {
+                  const tagName = getTagName(tagId);
+                  const tagColor = getTagColor(tagId);
+                  return (
+                    <button key={tagId}
+                      className={`tag-filter-btn ${selectedTag === tagId ? 'active' : ''}`}
+                      style={selectedTag === tagId ? { backgroundColor: tagColor, borderColor: tagColor } : { borderColor: tagColor, color: tagColor }}
+                      onClick={() => setSelectedTag(tagId === selectedTag ? '' : tagId)}>
+                      🏷️ {tagName}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -241,7 +256,14 @@ export default function Archive() {
                 {previewCollage.tags.length > 0 && (
                   <div className="preview-stat">
                     <span className="stat-label">标签</span>
-                    <span className="stat-value">{previewCollage.tags.join('、')}</span>
+                    <span className="stat-value preview-tags">
+                      {previewCollage.tags.map(tid => (
+                        <span key={tid} className="preview-tag"
+                          style={{ backgroundColor: getTagColor(tid) + '20', color: getTagColor(tid), borderColor: getTagColor(tid) }}>
+                          🏷️ {getTagName(tid)}
+                        </span>
+                      ))}
+                    </span>
                   </div>
                 )}
               </div>
