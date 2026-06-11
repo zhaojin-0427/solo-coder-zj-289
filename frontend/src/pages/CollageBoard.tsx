@@ -120,11 +120,10 @@ export default function CollageBoard() {
   async function loadPlans() {
     setLoadingPlans(true);
     try {
-      const data = await planApi.getAll({ status: 'pending' });
-      setPlans(data);
-    } catch {
       const allPlans = await planApi.getAll();
       setPlans(allPlans.filter(p => p.status === 'pending' || p.status === 'in_progress'));
+    } catch {
+      setPlans([]);
     } finally {
       setLoadingPlans(false);
     }

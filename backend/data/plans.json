@@ -1,22 +1,38 @@
 [
   {
-    "id": "f3521856-5ff9-434b-930b-420e7f870dc8",
-    "title": "夏日旅行手账",
-    "description": "记录暑假旅行的美好时光",
-    "date": "2025-07-15",
+    "id": "a039faa2-af4a-47f3-bb27-ce47d6f62b42",
+    "title": "进行中绑定复验",
+    "description": "验证下拉包含进行中",
+    "date": "2026-06-14",
     "themes": [
       "旅行"
     ],
     "colorFamilies": [
-      "yellow",
-      "green",
-      "blue"
+      "green"
     ],
     "plannedStickerIds": [],
     "referenceTagIds": [],
-    "estimatedDuration": 60,
-    "status": "overdue",
-    "createdAt": "2026-06-11T04:50:30.094Z",
-    "updatedAt": "2026-06-11T04:50:30.094Z"
+    "estimatedDuration": 30,
+    "status": "in_progress",
+    "createdAt": "2026-06-11T05:22:07.620Z",
+    "updatedAt": "2026-06-11T05:22:18.717Z"
+  },
+  {
+    "id": "50390d40-0105-43b5-a6c1-148c56411cbc",
+    "title": "待开始绑定复验",
+    "description": "验证下拉包含待开始",
+    "date": "2026-06-15",
+    "themes": [
+      "旅行"
+    ],
+    "colorFamilies": [
+      "green"
+    ],
+    "plannedStickerIds": [],
+    "referenceTagIds": [],
+    "estimatedDuration": 30,
+    "status": "pending",
+    "createdAt": "2026-06-11T05:22:07.630Z",
+    "updatedAt": "2026-06-11T05:22:07.630Z"
   }
 ]

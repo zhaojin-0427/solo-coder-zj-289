@@ -23,5 +23,28 @@
     ],
     "createdAt": "2026-06-11T00:48:23.603Z",
     "updatedAt": "2026-06-11T00:48:23.603Z"
+  },
+  {
+    "id": "86e8dd6b-2136-436d-b7f3-7c70fe07a983",
+    "title": "绑定计划复验作品",
+    "description": "验证计划自动完成",
+    "elements": [
+      {
+        "id": "e_bind",
+        "stickerId": "129e9f48-f877-47ce-9479-169744cb4a71",
+        "x": 10,
+        "y": 10,
+        "width": 80,
+        "height": 80,
+        "rotation": 0,
+        "zIndex": 1
+      }
+    ],
+    "backgroundColor": "#FFFFFF",
+    "canvasWidth": 600,
+    "canvasHeight": 840,
+    "tags": [],
+    "createdAt": "2026-06-11T05:04:34.650Z",
+    "updatedAt": "2026-06-11T05:04:34.650Z"
   }
 ]
